@@ -1,0 +1,29 @@
+version: '3.5'
+
+volumes:
+  db-data-volume:
+
+services:
+  mysql:
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      DEFAULT_PASSWORD_LIFETIME: 0
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 26677
+        hard: 46677
+  redis:
+    image: redis/redis-stack
+    volumes:
+      - ./redis/data:/data
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+

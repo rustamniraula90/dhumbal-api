@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: '@project.name@'
+    version: '@project.version@'
+    description: '@project.description@'
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://localhost:3306/dhumbal?createDatabaseIfNotExist=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+springdoc:
+  swagger-ui:
+    enabled: true
+    docExpansion: none # list, full, none
+dhumbal:
+  security:
+    corsAllowedOrigins: "http://localhost:5173"
+    corsAllowedMethods: "GET,POST,PUT,PATCH,DELETE"
+    permitUrls: "/v1/auth/google,/v1/auth/guest,/v1/auth/token/refresh,/swagger-ui.html,/v3/api-docs,/v3/api-docs/*,/swagger-ui/*"
+    jwt:
+      key: IesVMpepKO+d6cRtSeQH7uVrHofuRfJYagh+erVJg/xGs4jnJQU6oox04+eoD8CtRZviXafLYkpQrg73d1pqBg==
+      accessTokenExpiryInMinute: 30
+      refreshTokenExpiryInMinute: 43200
+    google:
+      certUrl: https://www.googleapis.com/oauth2/v3/certs
+      clientId: 24099078143-qq0hgilb233dmasq45klcqdt36kthlnm.apps.googleusercontent.com
