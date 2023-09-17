@@ -10,4 +10,6 @@ public interface AuthService {
     LoginResponse authenticateGuest();
 
     LoginResponse refreshToken(RefreshTokenRequest request);
+
+    void logout();
 }

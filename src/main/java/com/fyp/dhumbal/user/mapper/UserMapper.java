@@ -4,6 +4,7 @@ import com.fyp.dhumbal.global.sdk.GoogleSdk;
 import com.fyp.dhumbal.global.util.RandomGenerator;
 import com.fyp.dhumbal.user.dal.UserEntity;
 import com.fyp.dhumbal.user.dal.UserType;
+import com.fyp.dhumbal.user.rest.model.UserResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -23,4 +24,6 @@ public interface UserMapper {
         userEntity.setName("Guest_" + RandomGenerator.generateAlphanumeric(10));
         return userEntity;
     }
+
+    UserResponse toResponse(UserEntity user);
 }

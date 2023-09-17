@@ -7,7 +7,6 @@ import com.fyp.dhumbal.token.entity.ActiveTokenType;
 import com.fyp.dhumbal.token.mapper.ActiveTokenMapper;
 import com.fyp.dhumbal.token.repository.ActiveTokenRepository;
 import com.fyp.dhumbal.token.service.ActiveTokenService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

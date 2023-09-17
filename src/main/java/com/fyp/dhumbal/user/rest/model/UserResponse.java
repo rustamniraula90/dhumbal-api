@@ -1,4 +1,11 @@
 package com.fyp.dhumbal.user.rest.model;
 
-public class GetUserResponse {
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class UserResponse {
+    private String id;
+    private String name;
 }

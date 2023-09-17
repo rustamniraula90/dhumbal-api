@@ -6,6 +6,7 @@ import com.fyp.dhumbal.auth.rest.model.RefreshTokenRequest;
 import com.fyp.dhumbal.auth.service.AuthService;
 import com.fyp.dhumbal.global.sdk.GoogleSdk;
 import com.fyp.dhumbal.global.service.TokenService;
+import com.fyp.dhumbal.global.util.AuthUtil;
 import com.fyp.dhumbal.user.dal.UserEntity;
 import com.fyp.dhumbal.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -35,5 +36,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponse refreshToken(RefreshTokenRequest request) {
         return tokenService.refreshToken(request.getToken());
+    }
+
+    @Override
+    public void logout() {
+        tokenService.deleteToken(AuthUtil.getLoggedInUserRefreshTokenId());
     }
 }

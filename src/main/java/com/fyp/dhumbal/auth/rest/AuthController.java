@@ -31,4 +31,9 @@ public class AuthController {
     public LoginResponse guestLogin(@RequestBody RefreshTokenRequest request) {
         return authService.refreshToken(request);
     }
+
+    @PostMapping("/logout")
+    public void logout() {
+        authService.logout();
+    }
 }
