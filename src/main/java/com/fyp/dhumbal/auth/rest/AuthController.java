@@ -1,8 +1,6 @@
 package com.fyp.dhumbal.auth.rest;
 
-import com.fyp.dhumbal.auth.rest.model.GoogleAuthRequest;
-import com.fyp.dhumbal.auth.rest.model.LoginResponse;
-import com.fyp.dhumbal.auth.rest.model.RefreshTokenRequest;
+import com.fyp.dhumbal.auth.rest.model.*;
 import com.fyp.dhumbal.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +23,16 @@ public class AuthController {
     @PostMapping("/guest")
     public LoginResponse guestLogin() {
         return authService.authenticateGuest();
+    }
+
+    @PostMapping("/register")
+    public LoginResponse registerUser(@RequestBody RegisterRequest request) {
+        return authService.register(request);
+    }
+
+    @PostMapping("/login")
+    public LoginResponse loginUser(@RequestBody LoginRequest request) {
+        return authService.login(request);
     }
 
     @PostMapping("/token/refresh")

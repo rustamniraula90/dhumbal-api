@@ -25,7 +25,7 @@ dhumbal:
   security:
     corsAllowedOrigins: "http://localhost:5173"
     corsAllowedMethods: "GET,POST,PUT,PATCH,DELETE"
-    permitUrls: "/v1/auth/google,/v1/auth/guest,/v1/auth/token/refresh,/swagger-ui.html,/v3/api-docs,/v3/api-docs/*,/swagger-ui/*"
+    permitUrls: "/v1/auth/register,/v1/auth/login,/v1/auth/google,/v1/auth/guest,/v1/auth/token/refresh,/swagger-ui.html,/v3/api-docs,/v3/api-docs/*,/swagger-ui/*"
     jwt:
       key: IesVMpepKO+d6cRtSeQH7uVrHofuRfJYagh+erVJg/xGs4jnJQU6oox04+eoD8CtRZviXafLYkpQrg73d1pqBg==
       accessTokenExpiryInMinute: 30

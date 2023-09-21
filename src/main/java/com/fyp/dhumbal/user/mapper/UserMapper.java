@@ -1,5 +1,6 @@
 package com.fyp.dhumbal.user.mapper;
 
+import com.fyp.dhumbal.auth.rest.model.RegisterRequest;
 import com.fyp.dhumbal.global.sdk.GoogleSdk;
 import com.fyp.dhumbal.global.util.RandomGenerator;
 import com.fyp.dhumbal.user.dal.UserEntity;
@@ -17,6 +18,7 @@ public interface UserMapper {
     @Mapping(target = "verified", constant = "true")
     UserEntity toEntity(GoogleSdk.GoogleUserDetail googleUserDetail);
 
+    UserEntity toEntity(RegisterRequest request);
 
     default UserEntity newGuest() {
         UserEntity userEntity = new UserEntity();

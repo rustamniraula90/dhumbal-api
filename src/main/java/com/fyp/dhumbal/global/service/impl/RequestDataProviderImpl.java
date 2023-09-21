@@ -32,7 +32,10 @@ public class RequestDataProviderImpl implements RequestDataProvider {
 
     @Override
     public String getAccessToken() {
-        return getHeaderData(AuthConstant.AUTH_HEADER_NAME);
+        String authHeader = getHeaderData(AuthConstant.AUTH_HEADER_NAME);
+        if (authHeader != null)
+            authHeader = authHeader.replace("Bearer ", "");
+        return authHeader;
     }
 
     private String getHeaderData(String name) {

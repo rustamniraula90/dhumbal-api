@@ -1,8 +1,6 @@
 package com.fyp.dhumbal.auth.service;
 
-import com.fyp.dhumbal.auth.rest.model.GoogleAuthRequest;
-import com.fyp.dhumbal.auth.rest.model.LoginResponse;
-import com.fyp.dhumbal.auth.rest.model.RefreshTokenRequest;
+import com.fyp.dhumbal.auth.rest.model.*;
 
 public interface AuthService {
     LoginResponse authenticateGoogle(GoogleAuthRequest request);
@@ -12,4 +10,8 @@ public interface AuthService {
     LoginResponse refreshToken(RefreshTokenRequest request);
 
     void logout();
+
+    LoginResponse register(RegisterRequest request);
+
+    LoginResponse login(LoginRequest request);
 }

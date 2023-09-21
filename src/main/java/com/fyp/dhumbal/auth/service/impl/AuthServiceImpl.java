@@ -1,8 +1,6 @@
 package com.fyp.dhumbal.auth.service.impl;
 
-import com.fyp.dhumbal.auth.rest.model.GoogleAuthRequest;
-import com.fyp.dhumbal.auth.rest.model.LoginResponse;
-import com.fyp.dhumbal.auth.rest.model.RefreshTokenRequest;
+import com.fyp.dhumbal.auth.rest.model.*;
 import com.fyp.dhumbal.auth.service.AuthService;
 import com.fyp.dhumbal.global.sdk.GoogleSdk;
 import com.fyp.dhumbal.global.service.TokenService;
@@ -36,6 +34,16 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponse refreshToken(RefreshTokenRequest request) {
         return tokenService.refreshToken(request.getToken());
+    }
+
+    @Override
+    public LoginResponse register(RegisterRequest request) {
+        return tokenService.generateToken(userService.registerUser(request));
+    }
+
+    @Override
+    public LoginResponse login(LoginRequest request) {
+        return tokenService.generateToken(userService.loginUser(request));
     }
 
     @Override

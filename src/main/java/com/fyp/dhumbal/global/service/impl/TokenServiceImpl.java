@@ -15,7 +15,6 @@ import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,7 +45,7 @@ public class TokenServiceImpl implements TokenService {
                 userEntity.getId(),
                 Collections.singletonMap(AuthConstant.REFRESH_TOKEN_CLAIM, refreshTokenId),
                 jwtProperty.getRefreshTokenExpiryInMinute(), jwtProperty.getKey());
-        LoginResponse token = new LoginResponse(userEntity.getId(), userEntity.getName(), accessToken, refreshToken);
+        LoginResponse token = new LoginResponse(userEntity.getId(), userEntity.getName(), userEntity.getUserType(), accessToken, refreshToken);
         tokenService.saveAccessToken(accessTokenId, refreshTokenId, userEntity.getId(), accessToken.getExpiry());
 
         return token;
@@ -65,7 +64,7 @@ public class TokenServiceImpl implements TokenService {
                 claims.getSubject(),
                 Collections.singletonMap(AuthConstant.REFRESH_TOKEN_CLAIM, claims.getId()),
                 jwtProperty.getRefreshTokenExpiryInMinute(), jwtProperty.getKey());
-        return new LoginResponse(userEntity.getId(), userEntity.getName(), accessToken, new JwtUtil.JwtToken(refreshToken, claims.getExpiration().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()));
+        return new LoginResponse(userEntity.getId(), userEntity.getName(), userEntity.getUserType(), accessToken, new JwtUtil.JwtToken(refreshToken, claims.getExpiration().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()));
     }
 
     @Override
