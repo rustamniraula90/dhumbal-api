@@ -27,6 +27,8 @@ public class ActiveTokenEntity implements Serializable {
 
     private LocalDateTime expiry;
 
+    private LocalDateTime loggedInTime;
+
     @Indexed
     private String refreshToken;
 

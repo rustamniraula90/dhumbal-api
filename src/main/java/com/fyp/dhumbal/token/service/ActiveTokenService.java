@@ -1,8 +1,9 @@
 package com.fyp.dhumbal.token.service;
 
-import jakarta.transaction.Transactional;
+import com.fyp.dhumbal.user.rest.model.UserSessionResponse;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface ActiveTokenService {
 
@@ -15,4 +16,8 @@ public interface ActiveTokenService {
     void deleteTokens(String refreshTokenId);
 
     void deleteAccessTokens(String refreshTokenId);
+
+    List<UserSessionResponse> getUserSessions(String userId);
+
+    void deleteSession(String id);
 }

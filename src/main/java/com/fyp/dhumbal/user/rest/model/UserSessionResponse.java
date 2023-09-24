@@ -5,8 +5,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class UserResponse {
+public class UserSessionResponse {
     private String id;
-    private String name;
-    private String email;
+    private String ip;
+    private String userAgent;
+    private String loggedInTime;
 }

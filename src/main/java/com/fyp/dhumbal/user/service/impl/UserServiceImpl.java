@@ -10,6 +10,7 @@ import com.fyp.dhumbal.user.dal.UserRepository;
 import com.fyp.dhumbal.user.mapper.UserMapper;
 import com.fyp.dhumbal.user.rest.model.UserResponse;
 import com.fyp.dhumbal.user.service.UserService;
+import com.fyp.dhumbal.userprofile.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +24,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final UserProfileService userProfileService;
 
 
     @Override
@@ -33,13 +35,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserEntity createNewGuest() {
-        return userRepository.save(userMapper.newGuest());
+        return createUser(userMapper.newGuest());
     }
 
     @Override
-    public UserResponse getById(String loggedInUserId) {
-        return userMapper.toResponse(userRepository.findById(loggedInUserId)
-                .orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "user not found")));
+    public UserResponse getById(String loggedInUserId, boolean includeEmail) {
+        return userMapper.toResponse(userRepository.findById(loggedInUserId).map(user -> {
+            if (!includeEmail) user.setEmail(null);
+            return user;
+        }).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "user not found")));
     }
 
     @Override
@@ -56,11 +60,16 @@ public class UserServiceImpl implements UserService {
     public UserEntity registerUser(RegisterRequest request) {
         UserEntity user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        return userRepository.save(user);
+        return createUser(user);
     }
 
     private UserEntity createGoogleUser(GoogleSdk.GoogleUserDetail googleUserDetail) {
-        log.info("saving new user with id {}", googleUserDetail.getId());
-        return userRepository.save(userMapper.toEntity(googleUserDetail));
+        return createUser(userMapper.toEntity(googleUserDetail));
+    }
+
+    private UserEntity createUser(UserEntity userEntity) {
+        userEntity = userRepository.save(userEntity);
+        userProfileService.createUserProfile(userEntity);
+        return userEntity;
     }
 }

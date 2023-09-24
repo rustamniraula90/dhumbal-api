@@ -12,4 +12,5 @@ public interface ActiveTokenRepository extends KeyValueRepository<ActiveTokenEnt
 
     List<ActiveTokenEntity> findByRefreshToken(String refreshTokenId);
 
+    List<ActiveTokenEntity> findByUser(String user);
 }

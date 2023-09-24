@@ -1,4 +1,4 @@
-package com.fyp.dhumbal.userprofile;
+package com.fyp.dhumbal.userprofile.dal;
 
 import com.fyp.dhumbal.user.dal.UserEntity;
 import jakarta.persistence.*;
@@ -22,7 +22,6 @@ public class UserProfileEntity {
     private int gamesPlayed;
     private int gamesWon;
     private int gamesLost;
-    private int gamesDrawn;
     private int totalPoints;
 
 }

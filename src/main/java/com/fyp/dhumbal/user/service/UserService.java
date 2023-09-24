@@ -12,7 +12,7 @@ public interface UserService {
 
     UserEntity createNewGuest();
 
-    UserResponse getById(String loggedInUserId);
+    UserResponse getById(String loggedInUserId, boolean includeEmail);
 
     UserEntity loginUser(LoginRequest request);
 
