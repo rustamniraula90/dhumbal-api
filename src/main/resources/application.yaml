@@ -33,3 +33,12 @@ dhumbal:
     google:
       certUrl: https://www.googleapis.com/oauth2/v3/certs
       clientId: 24099078143-qq0hgilb233dmasq45klcqdt36kthlnm.apps.googleusercontent.com
+  room:
+    code:
+      length: 5
+    member:
+      max: 5
+    join:
+      waitingSeconds: 30
+  game:
+    points: 100

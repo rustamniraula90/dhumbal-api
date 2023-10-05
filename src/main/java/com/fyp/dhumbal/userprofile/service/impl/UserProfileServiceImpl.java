@@ -9,6 +9,7 @@ import com.fyp.dhumbal.userprofile.mapper.UserProfileMapper;
 import com.fyp.dhumbal.user.rest.model.GetUserProfileResponse;
 import com.fyp.dhumbal.userprofile.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,6 +18,9 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     private final UserProfileRepository userProfileRepository;
     private final UserProfileMapper userProfileMapper;
+
+    @Value("${dhumbal.game.points}")
+    private Integer gamePoints;
 
     @Override
     public GetUserProfileResponse getUserProfileById(String userId) {
@@ -28,6 +32,23 @@ public class UserProfileServiceImpl implements UserProfileService {
     public void createUserProfile(UserEntity userEntity) {
         UserProfileEntity userProfile = new UserProfileEntity();
         userProfile.setUserId(userEntity.getId());
+        userProfileRepository.save(userProfile);
+    }
+
+    @Override
+    public void updateStatus(String userId, boolean winner) {
+        UserProfileEntity userProfile = userProfileRepository.findById(userId)
+                .orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "User not found"));
+        userProfile.setGamesPlayed(userProfile.getGamesPlayed() + 1);
+        if (winner) {
+            userProfile.setGamesWon(userProfile.getGamesWon() + 1);
+            userProfile.setTotalPoints(userProfile.getTotalPoints() + gamePoints);
+        } else {
+            userProfile.setGamesLost(userProfile.getGamesLost() + 1);
+            if ((userProfile.getTotalPoints() - gamePoints) > 0) {
+                userProfile.setTotalPoints(userProfile.getTotalPoints() - gamePoints);
+            }
+        }
         userProfileRepository.save(userProfile);
     }
 }

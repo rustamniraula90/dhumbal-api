@@ -7,4 +7,7 @@ public interface UserProfileService {
     GetUserProfileResponse getUserProfileById(String loggedInUserId);
 
     void createUserProfile(UserEntity userEntity);
+
+    void updateStatus(String userId, boolean winner);
+
 }
