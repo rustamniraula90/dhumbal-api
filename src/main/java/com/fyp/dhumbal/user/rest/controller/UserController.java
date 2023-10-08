@@ -1,6 +1,8 @@
 package com.fyp.dhumbal.user.rest.controller;
 
+import com.fyp.dhumbal.global.error.exception.impl.BadRequestException;
 import com.fyp.dhumbal.global.util.AuthUtil;
+import com.fyp.dhumbal.global.util.ResourceUtil;
 import com.fyp.dhumbal.token.service.ActiveTokenService;
 import com.fyp.dhumbal.user.rest.model.UserResponse;
 import com.fyp.dhumbal.user.rest.model.UserSessionResponse;
@@ -8,6 +10,8 @@ import com.fyp.dhumbal.user.service.UserService;
 import com.fyp.dhumbal.user.rest.model.GetUserProfileResponse;
 import com.fyp.dhumbal.userprofile.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +24,9 @@ public class UserController {
     private final UserService userService;
     private final UserProfileService userProfileService;
     private final ActiveTokenService tokenService;
+
+    @Value("classpath:verify_page.html")
+    private Resource resource;
 
     @GetMapping("/current")
     public UserResponse getCurrentUser() {
@@ -50,4 +57,23 @@ public class UserController {
     public void deleteUserSession(@PathVariable("id") String id) {
         tokenService.deleteSession(id);
     }
+
+    @GetMapping(value = "/verify/{id}/{code}", produces = "text/html")
+    public String verifyCode(@PathVariable("id") String id, @PathVariable("code") String code) {
+        try {
+            userService.verifyUser(id, code);
+            return sendResponse("Email verified successfully!!!");
+        } catch (BadRequestException e) {
+            return sendResponse(e.getMessage());
+        } catch (Exception e) {
+            return sendResponse("Something went wrong, Please try again later!!!");
+        }
+    }
+
+    private String sendResponse(String message) {
+        String page = ResourceUtil.asString(resource);
+        page = page.replace("{message}", message);
+        return page;
+    }
+
 }

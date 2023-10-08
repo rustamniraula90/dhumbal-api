@@ -17,4 +17,6 @@ public interface UserService {
     UserEntity loginUser(LoginRequest request);
 
     UserEntity registerUser(RegisterRequest request);
+
+    void verifyUser(String id, String code);
 }

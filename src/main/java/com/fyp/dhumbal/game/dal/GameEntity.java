@@ -20,7 +20,8 @@ public class GameEntity implements Serializable {
     @Id
     private String id;
     private String turn;
-    private Boolean picked = false;
+    private Boolean thrown = false;
+    private Integer choiceCount = 0;
     private Boolean ended = false;
     private Integer endingPoint;
     private String endedBy;

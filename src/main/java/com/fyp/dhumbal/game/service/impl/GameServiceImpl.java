@@ -54,25 +54,33 @@ public class GameServiceImpl implements GameService {
 
         GameEntity game = validateGame(id, userId);
 
-        if (game.getPicked()) {
-            throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Card already picked");
+        if (!game.getThrown()) {
+            throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Player hasn't thrown a card!");
         }
         if (game.getEnded()) {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Card pick card after game ended");
         }
         if (request.isFloor()) {
-            game.getHands().get(userId).add(game.getFloor().remove(game.getFloor().size() - 1));
+            if (request.getChoice() >= game.getChoiceCount()) {
+                throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Invalid choice card");
+            }
+            int index = (game.getFloor().size()) - (game.getChoiceCount() - request.getChoice());
+            game.getHands().get(userId).add(game.getFloor().remove(index));
         } else {
             if (game.getDeck().isEmpty()) {
-                String lastCard = game.getFloor().remove(game.getFloor().size() - 1);
+                List<String> lastCards = game.getFloor().subList(game.getFloor().size() - (game.getChoiceCount() + 1), game.getFloor().size());
+                game.getFloor().removeAll(lastCards);
                 Collections.shuffle(game.getFloor());
                 game.setDeck(game.getFloor());
                 game.setFloor(new ArrayList<>());
-                game.getFloor().add(lastCard);
+                game.getFloor().addAll(lastCards);
             }
             game.getHands().get(userId).add(game.getDeck().remove(game.getDeck().size() - 1));
         }
-        game.setPicked(true);
+        game.setThrown(false);
+        game.setChoiceCount(0);
+        String nextPlayer = game.getPlayers().get((game.getPlayers().indexOf(userId) + 1) % game.getPlayers().size());
+        game.setTurn(nextPlayer);
         gameRepository.save(game);
     }
 
@@ -82,16 +90,58 @@ public class GameServiceImpl implements GameService {
 
         GameEntity game = validateGame(id, userId);
 
-        if (!game.getPicked()) {
-            throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Player has not picked a card");
+        if (game.getThrown()) {
+            throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Player has already thrown");
         }
-        String card = game.getHands().get(userId).stream().filter(c -> c.equals(request.getCard())).findFirst().orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Card not found"));
-        game.getHands().get(userId).remove(card);
-        game.getFloor().add(card);
-        game.setPicked(false);
-        String nextPlayer = game.getPlayers().get((game.getPlayers().indexOf(userId) + 1) % game.getPlayers().size());
-        game.setTurn(nextPlayer);
+        validateThrownCard(game.getHands().get(userId), request.getCard());
+        game.getHands().get(userId).removeAll(request.getCard());
+        game.setChoiceCount(request.getCard().size());
+        game.getFloor().addAll(request.getCard());
+        game.setThrown(true);
         gameRepository.save(game);
+    }
+
+    private void validateThrownCard(List<String> hand, List<String> thrownCards) {
+        for (String card : thrownCards) {
+            if (!hand.contains(card)) {
+                throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Invalid card thrown");
+            }
+        }
+        int size = thrownCards.size();
+
+        if (size == 1 || isSameValueCards(thrownCards) || isSameColorRun(thrownCards)) {
+            return;
+        }
+        throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Invalid card thrown");
+    }
+
+    private boolean isSameValueCards(List<String> cards) {
+        String val = cards.get(0).split("_")[1];
+        for (String card : cards) {
+            if (!card.split("_")[1].equals(val)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isSameColorRun(List<String> cards) {
+        List<Integer> run = new ArrayList<>();
+        String color = cards.get(0).split("_")[0];
+        for (String card : cards) {
+            String[] colorValue = card.split("_");
+            if (color.equals(colorValue[0])) {
+                return false;
+            }
+            run.add(Integer.parseInt(colorValue[1]));
+        }
+        Collections.sort(run);
+        for (int i = 1; i < run.size(); i++) {
+            if (!(run.get(i) == (run.get(i - 1) + 1))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
@@ -99,8 +149,8 @@ public class GameServiceImpl implements GameService {
         String userId = AuthUtil.getLoggedInUserId();
         GameEntity game = validateGame(id, userId);
 
-        if (game.getPicked()) {
-            throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Can't end game after picking a card");
+        if (game.getThrown()) {
+            throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Can't end game after throwing a card");
         }
         int sum = 0;
         for (String card : game.getHands().get(userId)) {
@@ -113,7 +163,7 @@ public class GameServiceImpl implements GameService {
         game.setEndingPoint(sum);
         game.setEnded(true);
         game.setEndedBy(userId);
-        game.setPicked(false);
+        game.setThrown(false);
         game.setWinner(userId);
         game.setWinnerPoint(game.getWinnerPoint());
         String nextPlayer = game.getPlayers().get((game.getPlayers().indexOf(userId) + 1) % game.getPlayers().size());
@@ -139,7 +189,7 @@ public class GameServiceImpl implements GameService {
         }
         game.setWinner(userId);
         game.setWinnerPoint(sum);
-        game.setPicked(false);
+        game.setThrown(false);
         String nextPlayer = game.getPlayers().get((game.getPlayers().indexOf(userId) + 1) % game.getPlayers().size());
         game.setTurn(nextPlayer);
         gameRepository.save(game);
@@ -153,7 +203,7 @@ public class GameServiceImpl implements GameService {
         if (!game.getEnded()) {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Cannot pass on running game");
         }
-        game.setPicked(false);
+        game.setThrown(false);
         String nextPlayer = game.getPlayers().get((game.getPlayers().indexOf(userId) + 1) % game.getPlayers().size());
         game.setTurn(nextPlayer);
         gameRepository.save(game);

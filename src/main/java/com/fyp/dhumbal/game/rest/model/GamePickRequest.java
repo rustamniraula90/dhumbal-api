@@ -7,4 +7,5 @@ import lombok.Setter;
 @Setter
 public class GamePickRequest {
     private boolean floor;
+    private int choice = 0;
 }

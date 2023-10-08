@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -20,6 +22,9 @@ public class UserEntity extends BaseEntity {
     private String email;
 
     private String password;
+
+    private String otp;
+    private Long otpExpiry;
 
     private boolean verified = false;
 
