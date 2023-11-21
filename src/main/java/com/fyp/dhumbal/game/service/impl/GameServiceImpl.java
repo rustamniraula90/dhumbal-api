@@ -11,6 +11,8 @@ import com.fyp.dhumbal.global.util.AuthUtil;
 import com.fyp.dhumbal.global.util.CardUtil;
 import com.fyp.dhumbal.room.dal.member.RoomMemberEntity;
 import com.fyp.dhumbal.room.dal.member.RoomMemberRepository;
+import com.fyp.dhumbal.updater.model.UpdateType;
+import com.fyp.dhumbal.updater.service.UpdaterService;
 import com.fyp.dhumbal.userprofile.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ public class GameServiceImpl implements GameService {
     private final GameRepository gameRepository;
     private final RoomMemberRepository roomMemberRepository;
     private final UserProfileService userProfileService;
+    private final UpdaterService updaterService;
 
     @Override
     public void startGame(String id) {
@@ -46,6 +49,12 @@ public class GameServiceImpl implements GameService {
         game.setDeck(allCard);
         game.setTurn(game.getPlayers().get(0));
         gameRepository.save(game);
+        // TODO: Add game global information
+        updaterService.updateRoom(id, UpdateType.GAME_STARTED, game);
+        for (String player : roomMemberEntity.getMembers()) {
+            // TODO: Add player local information
+            updaterService.updatePlayer(player, UpdateType.GAME_STARTED, game);
+        }
     }
 
     @Override
@@ -82,6 +91,10 @@ public class GameServiceImpl implements GameService {
         String nextPlayer = game.getPlayers().get((game.getPlayers().indexOf(userId) + 1) % game.getPlayers().size());
         game.setTurn(nextPlayer);
         gameRepository.save(game);
+        // TODO: Add game global information
+        updaterService.updateRoom(id, UpdateType.CARD_PICKED, game);
+        // TODO: Add player local information
+        updaterService.updatePlayer(userId, UpdateType.CARD_PICKED, game);
     }
 
     @Override
@@ -99,6 +112,10 @@ public class GameServiceImpl implements GameService {
         game.getFloor().addAll(request.getCard());
         game.setThrown(true);
         gameRepository.save(game);
+        // TODO: Add game global information
+        updaterService.updateRoom(id, UpdateType.CARD_THROWN, game);
+        // TODO: Add player local information
+        updaterService.updatePlayer(userId, UpdateType.CARD_THROWN, game);
     }
 
     private void validateThrownCard(List<String> hand, List<String> thrownCards) {
@@ -169,6 +186,10 @@ public class GameServiceImpl implements GameService {
         String nextPlayer = game.getPlayers().get((game.getPlayers().indexOf(userId) + 1) % game.getPlayers().size());
         game.setTurn(nextPlayer);
         gameRepository.save(game);
+        // TODO: Add game global information
+        updaterService.updateRoom(id, UpdateType.GAME_ENDED, game);
+        // TODO: Add player local information
+        updaterService.updatePlayer(userId, UpdateType.GAME_ENDED, game);
     }
 
     @Override
@@ -193,7 +214,10 @@ public class GameServiceImpl implements GameService {
         String nextPlayer = game.getPlayers().get((game.getPlayers().indexOf(userId) + 1) % game.getPlayers().size());
         game.setTurn(nextPlayer);
         gameRepository.save(game);
-
+        // TODO: Add game global information
+        updaterService.updateRoom(id, UpdateType.DHUMBAL, game);
+        // TODO: Add player local information
+        updaterService.updatePlayer(userId, UpdateType.DHUMBAL, game);
     }
 
     @Override
@@ -207,6 +231,10 @@ public class GameServiceImpl implements GameService {
         String nextPlayer = game.getPlayers().get((game.getPlayers().indexOf(userId) + 1) % game.getPlayers().size());
         game.setTurn(nextPlayer);
         gameRepository.save(game);
+        // TODO: Add game global information
+        updaterService.updateRoom(id, UpdateType.PASS, game);
+        // TODO: Add player local information
+        updaterService.updatePlayer(userId, UpdateType.PASS, game);
     }
 
     @Override
@@ -219,6 +247,8 @@ public class GameServiceImpl implements GameService {
             userProfileService.updateStatus(player, player.equals(game.getWinner()));
         }
         gameRepository.delete(game);
+        // TODO: Add game global information
+        updaterService.updateRoom(id, UpdateType.GAME_FINALIZED, game);
     }
 
     private GameEntity validateGame(String gameId, String userId) {

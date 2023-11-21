@@ -14,6 +14,8 @@ import com.fyp.dhumbal.room.mapper.RoomMapper;
 import com.fyp.dhumbal.room.rest.model.CreateRoomRequest;
 import com.fyp.dhumbal.room.rest.model.RoomResponse;
 import com.fyp.dhumbal.room.service.RoomService;
+import com.fyp.dhumbal.updater.model.UpdateType;
+import com.fyp.dhumbal.updater.service.UpdaterService;
 import com.fyp.dhumbal.user.dal.UserEntity;
 import com.fyp.dhumbal.user.dal.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class RoomServiceImpl implements RoomService {
     private final RoomMapper roomMapper;
     private final UserRepository userRepository;
     private final GameService gameService;
+    private final UpdaterService updaterService;
 
     @Value("${dhumbal.room.code.length}")
     private int roomCodeLength;
@@ -63,6 +66,7 @@ public class RoomServiceImpl implements RoomService {
         if (roomMember.getMembers().size() <= roomMemberMax) {
             roomMember.getMembers().add(AuthUtil.getLoggedInUserId());
             roomMemberRepository.save(roomMember);
+            updaterService.updateRoom(room.getId(), UpdateType.PLAYER_JOINED, AuthUtil.getLoggedInUserId());
         } else
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Room is full");
         return roomMapper.toResponse(room);
@@ -90,9 +94,11 @@ public class RoomServiceImpl implements RoomService {
             roomMemberEntity.getMembers().add(AuthUtil.getLoggedInUserId());
             roomMemberRepository.delete(roomMemberEntity);
             roomRepository.delete(roomEntity);
+            updaterService.updateRoom(roomEntity.getId(), UpdateType.ROOM_ENDED, null);
         } else {
             roomMemberEntity.getMembers().remove(AuthUtil.getLoggedInUserId());
             roomMemberRepository.save(roomMemberEntity);
+            updaterService.updateRoom(roomEntity.getId(), UpdateType.PLAYER_LEFT, AuthUtil.getLoggedInUserId());
         }
         return roomMapper.toResponse(roomEntity);
     }

@@ -11,8 +11,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    database-platform: org.hibernate.dialect.MySQLDialect
     show-sql: true
+    open-in-view: false
   data:
     redis:
       host: localhost
