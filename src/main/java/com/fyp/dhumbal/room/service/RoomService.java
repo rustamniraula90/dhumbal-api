@@ -13,4 +13,6 @@ public interface RoomService {
     RoomResponse leaveRoom(String code);
 
     RoomResponse startRoom(String roomId);
+
+    RoomResponse getRoomById(String roomId);
 }

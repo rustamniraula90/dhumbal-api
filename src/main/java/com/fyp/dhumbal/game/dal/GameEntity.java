@@ -8,6 +8,8 @@ import lombok.Setter;
 import org.springframework.data.redis.core.RedisHash;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,8 +29,8 @@ public class GameEntity implements Serializable {
     private String endedBy;
     private String winner;
     private Integer winnerPoint;
-    private List<String> players;
-    private List<String> deck;
-    private Map<String, List<String>> hands;
-    private List<String> floor;
+    private List<String> players = new ArrayList<>();
+    private List<String> deck = new ArrayList<>();
+    private Map<String, List<String>> hands = new HashMap<>();
+    private List<String> floor = new ArrayList<>();
 }

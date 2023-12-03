@@ -21,7 +21,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/dhumbal-websocket");
-        registry.addEndpoint("/dhumbal-websocket").withSockJS();
+        registry.addEndpoint("/dhumbal-websocket").setAllowedOrigins("*");
+        registry.addEndpoint("/dhumbal-websocket").setAllowedOrigins("*").withSockJS();
     }
 }

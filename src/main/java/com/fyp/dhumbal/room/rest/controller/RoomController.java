@@ -13,6 +13,11 @@ public class RoomController {
 
     private final RoomService roomService;
 
+    @GetMapping("/{roomId}")
+    public RoomResponse getRoom(@PathVariable("roomId") String roomId) {
+        return roomService.getRoomById(roomId);
+    }
+
     @PostMapping
     public RoomResponse createRoom(@RequestBody CreateRoomRequest request) {
         return roomService.createRoom(request);
@@ -33,7 +38,7 @@ public class RoomController {
         return roomService.leaveRoom(code);
     }
 
-    @PostMapping("/{id}/start/")
+    @PostMapping("/{id}/start")
     public RoomResponse startRoom(@PathVariable("id") String roomId) {
         return roomService.startRoom(roomId);
     }

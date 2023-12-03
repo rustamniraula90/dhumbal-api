@@ -18,10 +18,13 @@ import com.fyp.dhumbal.updater.model.UpdateType;
 import com.fyp.dhumbal.updater.service.UpdaterService;
 import com.fyp.dhumbal.user.dal.UserEntity;
 import com.fyp.dhumbal.user.dal.UserRepository;
+import com.fyp.dhumbal.user.rest.model.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -51,7 +54,9 @@ public class RoomServiceImpl implements RoomService {
         } while (roomRepository.existsByCode(code));
         UserEntity user = userRepository.findById(Objects.requireNonNull(AuthUtil.getLoggedInUserId())).orElseThrow(() -> new BadRequestException(ErrorCodes.INTERNAL_SERVER_ERROR, "User not found"));
         RoomEntity room = roomRepository.save(roomMapper.toEntity(code, user));
-        roomMemberRepository.save(roomMapper.toRoomMember(room));
+        RoomMemberEntity roomMemberEntity = roomMapper.toRoomMember(room);
+        roomMemberEntity.setMembers(Collections.singletonList(user.getId()));
+        roomMemberRepository.save(roomMemberEntity);
         return roomMapper.toResponse(room);
     }
 
@@ -81,8 +86,13 @@ public class RoomServiceImpl implements RoomService {
                 RoomMemberEntity roomMemberEntity = roomMemberRepository.findById(waitingRooms.get(0).getId()).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Room not found"));
                 return joinRoom(waitingRooms.get(0), roomMemberEntity);
             }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
-        throw new BadRequestException(ErrorCodes.BAD_REQUEST, "No room found");
+        return createRoom(new CreateRoomRequest(false));
     }
 
     @Override
@@ -91,7 +101,6 @@ public class RoomServiceImpl implements RoomService {
         RoomMemberEntity roomMemberEntity = roomMemberRepository.findById(roomEntity.getId()).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Room not found"));
         String userId = AuthUtil.getLoggedInUserId();
         if (roomMemberEntity.getOwnerId().equals(userId)) {
-            roomMemberEntity.getMembers().add(AuthUtil.getLoggedInUserId());
             roomMemberRepository.delete(roomMemberEntity);
             roomRepository.delete(roomEntity);
             updaterService.updateRoom(roomEntity.getId(), UpdateType.ROOM_ENDED, null);
@@ -120,5 +129,20 @@ public class RoomServiceImpl implements RoomService {
         roomRepository.save(roomEntity);
         gameService.startGame(roomId);
         return roomMapper.toResponse(roomEntity);
+    }
+
+    @Override
+    public RoomResponse getRoomById(String roomId) {
+        RoomEntity roomEntity = roomRepository.findById(roomId).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Room not found"));
+        RoomMemberEntity roomMemberEntity = roomMemberRepository.findById(roomEntity.getId()).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Room not found"));
+        RoomResponse response = roomMapper.toResponse(roomEntity);
+        response.setMembers(new ArrayList<>());
+        if (roomMemberEntity.getMembers() != null) {
+            for (String member : roomMemberEntity.getMembers()) {
+                UserEntity user = userRepository.findById(member).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "user not found"));
+                response.getMembers().add(new UserResponse(user.getId(), user.getName(), ""));
+            }
+        }
+        return response;
     }
 }
