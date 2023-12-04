@@ -1,5 +1,6 @@
 package com.fyp.dhumbal.game.dal;
 
+import jakarta.persistence.Convert;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,10 +9,7 @@ import lombok.Setter;
 import org.springframework.data.redis.core.RedisHash;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 @Setter
@@ -31,6 +29,22 @@ public class GameEntity implements Serializable {
     private Integer winnerPoint;
     private List<String> players = new ArrayList<>();
     private List<String> deck = new ArrayList<>();
-    private Map<String, List<String>> hands = new HashMap<>();
+    private Map<String, String> hands = new HashMap<>();
     private List<String> floor = new ArrayList<>();
+
+    public void setHands(Map<String, List<String>> hands) {
+        Map<String, String> parsed = new HashMap<>();
+        for (Map.Entry<String, List<String>> entry : hands.entrySet()) {
+            parsed.put(entry.getKey(), String.join(";", entry.getValue()));
+        }
+        this.hands = parsed;
+    }
+
+    public Map<String, List<String>> getHands() {
+        Map<String, List<String>> object = new HashMap<>();
+        for (Map.Entry<String, String> entry : this.hands.entrySet()) {
+            object.put(entry.getKey(), Arrays.asList(entry.getValue().split(";")));
+        }
+        return object;
+    }
 }

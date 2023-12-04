@@ -23,10 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -53,7 +50,7 @@ public class RoomServiceImpl implements RoomService {
             code = RandomGenerator.generateAlphabetic(roomCodeLength);
         } while (roomRepository.existsByCode(code));
         UserEntity user = userRepository.findById(Objects.requireNonNull(AuthUtil.getLoggedInUserId())).orElseThrow(() -> new BadRequestException(ErrorCodes.INTERNAL_SERVER_ERROR, "User not found"));
-        RoomEntity room = roomRepository.save(roomMapper.toEntity(code, user));
+        RoomEntity room = roomRepository.save(roomMapper.toEntity(code, user, request.isPrivateRoom()));
         RoomMemberEntity roomMemberEntity = roomMapper.toRoomMember(room);
         roomMemberEntity.setMembers(Collections.singletonList(user.getId()));
         roomMemberRepository.save(roomMemberEntity);
@@ -71,7 +68,10 @@ public class RoomServiceImpl implements RoomService {
         if (roomMember.getMembers().size() <= roomMemberMax) {
             roomMember.getMembers().add(AuthUtil.getLoggedInUserId());
             roomMemberRepository.save(roomMember);
-            updaterService.updateRoom(room.getId(), UpdateType.PLAYER_JOINED, AuthUtil.getLoggedInUserId());
+            Map<String, String> detail = new HashMap<>();
+            detail.put("name", AuthUtil.getLoggedInUserName());
+            detail.put("id", AuthUtil.getLoggedInUserId());
+            updaterService.updateRoom(room.getId(), UpdateType.PLAYER_JOINED, detail);
         } else
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Room is full");
         return roomMapper.toResponse(room);
@@ -81,7 +81,7 @@ public class RoomServiceImpl implements RoomService {
     public RoomResponse joinRandomRoom() {
         long waitingTime = System.currentTimeMillis() + (roomJoinWaitingSeconds * 1000L);
         while (waitingTime > System.currentTimeMillis()) {
-            List<RoomEntity> waitingRooms = roomRepository.findByStatus(RoomStatusEnum.WAITING);
+            List<RoomEntity> waitingRooms = roomRepository.findByStatusAndPrivateRoom(RoomStatusEnum.WAITING,false);
             if (!waitingRooms.isEmpty()) {
                 RoomMemberEntity roomMemberEntity = roomMemberRepository.findById(waitingRooms.get(0).getId()).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Room not found"));
                 return joinRoom(waitingRooms.get(0), roomMemberEntity);
@@ -107,7 +107,10 @@ public class RoomServiceImpl implements RoomService {
         } else {
             roomMemberEntity.getMembers().remove(AuthUtil.getLoggedInUserId());
             roomMemberRepository.save(roomMemberEntity);
-            updaterService.updateRoom(roomEntity.getId(), UpdateType.PLAYER_LEFT, AuthUtil.getLoggedInUserId());
+            Map<String, String> detail = new HashMap<>();
+            detail.put("name", AuthUtil.getLoggedInUserName());
+            detail.put("id", AuthUtil.getLoggedInUserId());
+            updaterService.updateRoom(roomEntity.getId(), UpdateType.PLAYER_LEFT, detail);
         }
         return roomMapper.toResponse(roomEntity);
     }

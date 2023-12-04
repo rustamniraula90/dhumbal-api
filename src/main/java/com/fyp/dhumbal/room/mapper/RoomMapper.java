@@ -15,7 +15,8 @@ public interface RoomMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "code", source = "code")
     @Mapping(target = "owner", source = "owner")
-    RoomEntity toEntity(String code, UserEntity owner);
+    @Mapping(target = "privateRoom", source = "privateRoom")
+    RoomEntity toEntity(String code, UserEntity owner, boolean privateRoom);
 
     @Mapping(target = "ownerId", source = "owner.id")
     RoomMemberEntity toRoomMember(RoomEntity room);
