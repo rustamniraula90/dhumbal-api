@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Entity
 @Table(name = "rooms")
 @Getter
@@ -23,5 +25,8 @@ public class RoomEntity extends BaseEntity {
     private UserEntity owner;
 
     private boolean privateRoom = false;
+
+    @OneToMany
+    private List<UserEntity> members;
 
 }

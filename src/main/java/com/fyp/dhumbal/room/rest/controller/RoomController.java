@@ -34,8 +34,8 @@ public class RoomController {
     }
 
     @DeleteMapping("/{code}/leave")
-    public RoomResponse leaveRoom(@PathVariable("code") String code) {
-        return roomService.leaveRoom(code);
+    public void leaveRoom(@PathVariable("code") String code) {
+        roomService.leaveRoom(code);
     }
 
     @PostMapping("/{id}/start")

@@ -10,7 +10,7 @@ public interface RoomService {
 
     RoomResponse joinRandomRoom();
 
-    RoomResponse leaveRoom(String code);
+    void leaveRoom(String code);
 
     RoomResponse startRoom(String roomId);
 

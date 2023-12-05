@@ -5,17 +5,23 @@ import com.fyp.dhumbal.game.dal.GameRepository;
 import com.fyp.dhumbal.game.rest.model.GamePickRequest;
 import com.fyp.dhumbal.game.rest.model.GameStateResponse;
 import com.fyp.dhumbal.game.rest.model.GameThrowRequest;
+import com.fyp.dhumbal.game.rest.model.GameUserResultResponse;
 import com.fyp.dhumbal.game.service.GameService;
 import com.fyp.dhumbal.global.error.codes.ErrorCodes;
 import com.fyp.dhumbal.global.error.exception.impl.BadRequestException;
 import com.fyp.dhumbal.global.util.AuthUtil;
 import com.fyp.dhumbal.global.util.CardUtil;
-import com.fyp.dhumbal.room.dal.member.RoomMemberEntity;
-import com.fyp.dhumbal.room.dal.member.RoomMemberRepository;
+import com.fyp.dhumbal.room.dal.RoomEntity;
+import com.fyp.dhumbal.room.dal.RoomRepository;
+import com.fyp.dhumbal.room.dal.RoomStatusEnum;
 import com.fyp.dhumbal.updater.model.UpdateType;
 import com.fyp.dhumbal.updater.service.UpdaterService;
+import com.fyp.dhumbal.user.dal.UserEntity;
+import com.fyp.dhumbal.user.dal.UserRepository;
 import com.fyp.dhumbal.userprofile.service.UserProfileService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -25,23 +31,28 @@ import java.util.*;
 public class GameServiceImpl implements GameService {
 
     private final GameRepository gameRepository;
-    private final RoomMemberRepository roomMemberRepository;
+    private final RoomRepository roomRepository;
+    private final UserRepository userRepository;
     private final UserProfileService userProfileService;
     private final UpdaterService updaterService;
 
+    @Value("${dhumbal.game.points}")
+    private Integer gamePoints;
+
     @Override
+    @Transactional
     public void startGame(String id) {
         gameRepository.findById(id).ifPresent(g -> {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Game has already started");
         });
 
-        RoomMemberEntity roomMemberEntity = roomMemberRepository.findById(id).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Room not found"));
+        RoomEntity room = roomRepository.findById(id).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Room not found"));
         GameEntity game = new GameEntity();
         game.setId(id);
-        game.setPlayers(roomMemberEntity.getMembers());
+        game.setPlayers(room.getMembers().stream().map(UserEntity::getId).toList());
         List<String> allCard = CardUtil.getShuffledCard();
         Map<String, List<String>> hands = new HashMap<>();
-        for (String player : roomMemberEntity.getMembers()) {
+        for (String player : game.getPlayers()) {
             hands.put(player, CardUtil.getRandomCard(allCard, 5));
         }
         game.setHands(hands);
@@ -51,25 +62,20 @@ public class GameServiceImpl implements GameService {
         game.setDeck(allCard);
         game.setTurn(game.getPlayers().get(0));
         gameRepository.save(game);
-        // TODO: Add game global information
-        updaterService.updateRoom(id, UpdateType.GAME_STARTED, game);
-        for (String player : roomMemberEntity.getMembers()) {
-            // TODO: Add player local information
-            updaterService.updatePlayer(player, UpdateType.GAME_STARTED, game);
-        }
+        updaterService.updateRoom(id, UpdateType.GAME_STARTED, null);
     }
 
     @Override
     public void pickCard(String id, GamePickRequest request) {
         String userId = AuthUtil.getLoggedInUserId();
-
         GameEntity game = validateGame(id, userId);
         Map<String, List<String>> hands = game.getHands();
+        String pickedCard = "deck";
 
-        if (!game.getThrown()) {
+        if (!game.isThrown()) {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Player hasn't thrown a card!");
         }
-        if (game.getEnded()) {
+        if (game.isEnded()) {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Card pick card after game ended");
         }
         if (request.isFloor()) {
@@ -77,6 +83,7 @@ public class GameServiceImpl implements GameService {
                 throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Invalid choice card");
             }
             int index = (game.getFloor().size()) - (game.getChoiceCount() - request.getChoice());
+            pickedCard = game.getFloor().get(index);
             hands.get(userId).add(game.getFloor().remove(index));
         } else {
             if (game.getDeck().isEmpty()) {
@@ -90,15 +97,17 @@ public class GameServiceImpl implements GameService {
             hands.get(userId).add(game.getDeck().remove(game.getDeck().size() - 1));
         }
         game.setThrown(false);
-        game.setChoiceCount(0);
         String nextPlayer = game.getPlayers().get((game.getPlayers().indexOf(userId) + 1) % game.getPlayers().size());
         game.setTurn(nextPlayer);
+        game.setChoiceCount(game.getTempFloor().size());
+        game.getFloor().addAll(game.getTempFloor());
+        game.setTempFloor(new ArrayList<>());
         game.setHands(hands);
         gameRepository.save(game);
-        // TODO: Add game global information
-        updaterService.updateRoom(id, UpdateType.CARD_PICKED, game);
-        // TODO: Add player local information
-        updaterService.updatePlayer(userId, UpdateType.CARD_PICKED, game);
+        Map<String, String> data = new HashMap<>();
+        data.put("card", pickedCard);
+        data.put("name", AuthUtil.getLoggedInUserName());
+        updaterService.updateGame(id, UpdateType.CARD_PICKED, data);
     }
 
     @Override
@@ -108,21 +117,19 @@ public class GameServiceImpl implements GameService {
         GameEntity game = validateGame(id, userId);
         Map<String, List<String>> hands = game.getHands();
 
-
-        if (game.getThrown()) {
+        if (game.isThrown()) {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Player has already thrown");
         }
         validateThrownCard(hands.get(userId), request.getCard());
         hands.get(userId).removeAll(request.getCard());
-        game.setChoiceCount(request.getCard().size());
-        game.getFloor().addAll(request.getCard());
+        game.setTempFloor(request.getCard());
         game.setThrown(true);
         game.setHands(hands);
         gameRepository.save(game);
-        // TODO: Add game global information
-        updaterService.updateRoom(id, UpdateType.CARD_THROWN, game);
-        // TODO: Add player local information
-        updaterService.updatePlayer(userId, UpdateType.CARD_THROWN, game);
+        Map<String, Object> data = new HashMap<>();
+        data.put("cards", request.getCard());
+        data.put("name", AuthUtil.getLoggedInUserName());
+        updaterService.updateGame(id, UpdateType.CARD_THROWN, data);
     }
 
     private void validateThrownCard(List<String> hand, List<String> thrownCards) {
@@ -154,14 +161,14 @@ public class GameServiceImpl implements GameService {
         String color = cards.get(0).split("_")[0];
         for (String card : cards) {
             String[] colorValue = card.split("_");
-            if (color.equals(colorValue[0])) {
+            if (!color.equals(colorValue[0])) {
                 return false;
             }
             run.add(Integer.parseInt(colorValue[1]));
         }
         Collections.sort(run);
         for (int i = 1; i < run.size(); i++) {
-            if (!(run.get(i) == (run.get(i - 1) + 1))) {
+            if (run.get(i) != (run.get(i - 1) + 1)) {
                 return false;
             }
         }
@@ -174,89 +181,48 @@ public class GameServiceImpl implements GameService {
         GameEntity game = validateGame(id, userId);
         Map<String, List<String>> hands = game.getHands();
 
-        if (game.getThrown()) {
+        if (game.isThrown()) {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Can't end game after throwing a card");
         }
-        int sum = 0;
-        for (String card : hands.get(userId)) {
-            String[] split = card.split("_");
-            sum += Integer.parseInt(split[1]);
-        }
+        int sum = getCardValue(hands.get(userId));
+
         if (sum > 5) {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Can't end game with more than 5 points");
+        }
+        String winnerId = userId;
+        int winningPoints = sum;
+        for (String player : game.getPlayers()) {
+            if (player.equals(userId)) {
+                continue;
+            }
+            int playerSum = getCardValue(hands.get(player));
+            if (playerSum < sum) {
+                winnerId = player;
+                winningPoints = playerSum;
+            }
         }
         game.setEndingPoint(sum);
         game.setEnded(true);
         game.setEndedBy(userId);
-        game.setThrown(false);
-        game.setWinner(userId);
-        game.setWinnerPoint(game.getWinnerPoint());
-        String nextPlayer = game.getPlayers().get((game.getPlayers().indexOf(userId) + 1) % game.getPlayers().size());
-        game.setTurn(nextPlayer);
+        game.setWinner(winnerId);
+        game.setWinnerPoint(winningPoints);
         gameRepository.save(game);
-        // TODO: Add game global information
-        updaterService.updateRoom(id, UpdateType.GAME_ENDED, game);
-        // TODO: Add player local information
-        updaterService.updatePlayer(userId, UpdateType.GAME_ENDED, game);
-    }
-
-    @Override
-    public void dhumbal(String id) {
-        String userId = AuthUtil.getLoggedInUserId();
-        GameEntity game = validateGame(id, userId);
-        Map<String, List<String>> hands = game.getHands();
-
-        if (!game.getEnded()) {
-            throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Cannot dhumbal on running game");
-        }
-        int sum = 0;
-        for (String card : hands.get(userId)) {
-            String[] split = card.split("_");
-            sum += Integer.parseInt(split[1]);
-        }
-        if (sum > game.getWinnerPoint()) {
-            throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Can't dhumbal with more than winner");
-        }
-        game.setWinner(userId);
-        game.setWinnerPoint(sum);
-        game.setThrown(false);
-        String nextPlayer = game.getPlayers().get((game.getPlayers().indexOf(userId) + 1) % game.getPlayers().size());
-        game.setTurn(nextPlayer);
-        gameRepository.save(game);
-        // TODO: Add game global information
-        updaterService.updateRoom(id, UpdateType.DHUMBAL, game);
-        // TODO: Add player local information
-        updaterService.updatePlayer(userId, UpdateType.DHUMBAL, game);
-    }
-
-    @Override
-    public void passGame(String id) {
-        String userId = AuthUtil.getLoggedInUserId();
-        GameEntity game = validateGame(id, userId);
-        if (!game.getEnded()) {
-            throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Cannot pass on running game");
-        }
-        game.setThrown(false);
-        String nextPlayer = game.getPlayers().get((game.getPlayers().indexOf(userId) + 1) % game.getPlayers().size());
-        game.setTurn(nextPlayer);
-        gameRepository.save(game);
-        // TODO: Add game global information
-        updaterService.updateRoom(id, UpdateType.PASS, game);
-        // TODO: Add player local information
-        updaterService.updatePlayer(userId, UpdateType.PASS, game);
+        updaterService.updateGame(id, UpdateType.GAME_ENDED, game);
+        finalizeGame(id);
     }
 
     @Override
     public void finalizeGame(String id) {
         GameEntity game = gameRepository.findById(id).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Game not found"));
-        if (!game.getEnded()) {
+        if (!game.isEnded()) {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Cannot finalize on running game");
         }
         for (String player : game.getPlayers()) {
             userProfileService.updateStatus(player, player.equals(game.getWinner()));
         }
-        gameRepository.delete(game);
-        // TODO: Add game global information
+        RoomEntity room = roomRepository.findById(id).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Room not found"));
+        room.setStatus(RoomStatusEnum.FINISHED);
+        roomRepository.save(room);
         updaterService.updateRoom(id, UpdateType.GAME_FINALIZED, game);
     }
 
@@ -267,14 +233,39 @@ public class GameServiceImpl implements GameService {
         String loggedInUser = AuthUtil.getLoggedInUserId();
         GameStateResponse response = new GameStateResponse();
         response.setTurn(game.getTurn());
-        response.setThrown(game.getThrown());
+        response.setThrown(game.isThrown());
         response.setChoiceCount(game.getChoiceCount());
         response.setPlayers(game.getPlayers());
         response.setChoices(game.getFloor().subList(floorLength - game.getChoiceCount(), floorLength));
         if (game.getPlayers().contains(loggedInUser)) {
             response.setHands(game.getHands().get(loggedInUser));
         }
+        for (String player : game.getPlayers()) {
+            response.getCardCount().put(player, game.getHands().get(player).size());
+        }
+        response.setPoints(getCardValue(response.getHands()));
+        response.setEnded(game.isEnded());
         return response;
+    }
+
+    @Override
+    public List<GameUserResultResponse> getResult(String gameId) {
+        GameEntity game = gameRepository.findById(gameId).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Game not found"));
+        if (!game.isEnded()) {
+            throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Game has not ended yet");
+        }
+        List<GameUserResultResponse> responses = new ArrayList<>();
+        for (String player : game.getPlayers()) {
+            UserEntity user = userRepository.findById(player).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "user not found"));
+            GameUserResultResponse response = new GameUserResultResponse();
+            response.setUserId(player);
+            response.setUserName(user.getName());
+            response.setPoints(getCardValue(game.getHands().get(player)));
+            response.setWinner(player.equals(game.getWinner()));
+            response.setScore((game.getWinner().equals(player)) ? gamePoints : -gamePoints);
+            responses.add(response);
+        }
+        return responses;
     }
 
     private GameEntity validateGame(String gameId, String userId) {
@@ -286,5 +277,14 @@ public class GameServiceImpl implements GameService {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Not your turn");
         }
         return game;
+    }
+
+    private int getCardValue(List<String> cards) {
+        int sum = 0;
+        for (String card : cards) {
+            String[] split = card.split("_");
+            sum += Integer.parseInt(split[1]);
+        }
+        return sum;
     }
 }

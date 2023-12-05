@@ -3,9 +3,12 @@ package com.fyp.dhumbal.game.rest.controller;
 import com.fyp.dhumbal.game.rest.model.GamePickRequest;
 import com.fyp.dhumbal.game.rest.model.GameStateResponse;
 import com.fyp.dhumbal.game.rest.model.GameThrowRequest;
+import com.fyp.dhumbal.game.rest.model.GameUserResultResponse;
 import com.fyp.dhumbal.game.service.GameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/v1/game")
@@ -29,14 +32,9 @@ public class GameController {
         gameService.endGame(gameId);
     }
 
-    @PostMapping("/{id}/pass")
-    public void passGame(@PathVariable("id") String gameId) {
-        gameService.passGame(gameId);
-    }
-
-    @PostMapping("/{id}/dhumbal")
-    public void dhumbal(@PathVariable("id") String gameId) {
-        gameService.dhumbal(gameId);
+    @GetMapping("/{id}/result")
+    public List<GameUserResultResponse> getGameResult(@PathVariable("id") String gameId) {
+        return gameService.getResult(gameId);
     }
 
     @GetMapping("/{id}/state")

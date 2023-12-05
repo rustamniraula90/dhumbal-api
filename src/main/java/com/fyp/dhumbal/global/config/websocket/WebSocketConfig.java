@@ -11,11 +11,12 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     public static final String ROOM_TOPIC = "/room";
-    public static final String PLAYER_TOPIC = "/player";
+    public static final String GAME_TOPIC = "/game";
+    public static final String USER_TOPIC = "/user";
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker(ROOM_TOPIC, PLAYER_TOPIC);
+        config.enableSimpleBroker(ROOM_TOPIC, GAME_TOPIC, USER_TOPIC);
         config.setApplicationDestinationPrefixes("/app");
     }
 

@@ -31,4 +31,8 @@ public class UserEntity extends BaseEntity {
     @Column(name = "user_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private UserType userType;
+
+    private boolean online = false;
+
+    private long lastOnline;
 }

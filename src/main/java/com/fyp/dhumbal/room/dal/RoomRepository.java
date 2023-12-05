@@ -12,5 +12,11 @@ public interface RoomRepository extends JpaRepository<RoomEntity, String> {
 
     Optional<RoomEntity> findByCodeAndStatus(String code, RoomStatusEnum status);
 
+    Optional<RoomEntity> findByCode(String code);
+
+    Optional<RoomEntity> findByOwner_Id(String ownerId);
+
     List<RoomEntity> findByStatusAndPrivateRoom(RoomStatusEnum roomStatusEnum, boolean privateRoom);
+
+    Optional<RoomEntity> findByMembers_Id(String memberId);
 }

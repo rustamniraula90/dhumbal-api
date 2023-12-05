@@ -19,4 +19,6 @@ public interface UserService {
     UserEntity registerUser(RegisterRequest request);
 
     void verifyUser(String id, String code);
+
+    void setOnline(String userId, boolean online);
 }

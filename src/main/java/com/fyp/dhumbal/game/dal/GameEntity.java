@@ -20,9 +20,9 @@ public class GameEntity implements Serializable {
     @Id
     private String id;
     private String turn;
-    private Boolean thrown = false;
-    private Integer choiceCount = 0;
-    private Boolean ended = false;
+    private boolean thrown = false;
+    private int choiceCount = 0;
+    private boolean ended = false;
     private Integer endingPoint;
     private String endedBy;
     private String winner;
@@ -31,6 +31,7 @@ public class GameEntity implements Serializable {
     private List<String> deck = new ArrayList<>();
     private Map<String, String> hands = new HashMap<>();
     private List<String> floor = new ArrayList<>();
+    private List<String> tempFloor = new ArrayList<>();
 
     public void setHands(Map<String, List<String>> hands) {
         Map<String, String> parsed = new HashMap<>();
@@ -43,7 +44,9 @@ public class GameEntity implements Serializable {
     public Map<String, List<String>> getHands() {
         Map<String, List<String>> object = new HashMap<>();
         for (Map.Entry<String, String> entry : this.hands.entrySet()) {
-            object.put(entry.getKey(), Arrays.asList(entry.getValue().split(";")));
+            if (entry.getValue() != null && !entry.getValue().isEmpty())
+                object.put(entry.getKey(), new ArrayList<>(Arrays.asList(entry.getValue().split(";"))));
+            else object.put(entry.getKey(), new ArrayList<>());
         }
         return object;
     }

@@ -12,6 +12,9 @@ import com.fyp.dhumbal.userprofile.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -68,6 +71,11 @@ public class UserController {
         } catch (Exception e) {
             return sendResponse("Something went wrong, Please try again later!!!");
         }
+    }
+
+    @MessageMapping("/user")
+    public void send(Message<String> userId) {
+        userService.setOnline(userId.getPayload(), true);
     }
 
     private String sendResponse(String message) {

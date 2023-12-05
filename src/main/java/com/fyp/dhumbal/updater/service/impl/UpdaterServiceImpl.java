@@ -7,8 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import static com.fyp.dhumbal.global.config.websocket.WebSocketConfig.PLAYER_TOPIC;
-import static com.fyp.dhumbal.global.config.websocket.WebSocketConfig.ROOM_TOPIC;
+import static com.fyp.dhumbal.global.config.websocket.WebSocketConfig.*;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +21,7 @@ public class UpdaterServiceImpl implements UpdaterService {
     }
 
     @Override
-    public void updatePlayer(String id, UpdateType type, Object payload) {
-        this.simpMessagingTemplate.convertAndSend(PLAYER_TOPIC + "/" + id, new UpdaterPayload(type, payload));
+    public void updateGame(String id, UpdateType type, Object payload) {
+        this.simpMessagingTemplate.convertAndSend(GAME_TOPIC + "/" + id, new UpdaterPayload(type, payload));
     }
 }

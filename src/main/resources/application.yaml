@@ -53,7 +53,7 @@ dhumbal:
     code:
       length: 5
     member:
-      max: 5
+      max: 4
     join:
       waitingSeconds: 10
   game:
