@@ -11,7 +11,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     open-in-view: false
   data:
     redis:
@@ -54,8 +54,6 @@ dhumbal:
       length: 5
     member:
       max: 4
-    join:
-      waitingSeconds: 10
   game:
     points: 100
 

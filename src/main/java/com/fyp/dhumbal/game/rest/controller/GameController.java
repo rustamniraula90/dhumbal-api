@@ -5,6 +5,7 @@ import com.fyp.dhumbal.game.rest.model.GameStateResponse;
 import com.fyp.dhumbal.game.rest.model.GameThrowRequest;
 import com.fyp.dhumbal.game.rest.model.GameUserResultResponse;
 import com.fyp.dhumbal.game.service.GameService;
+import com.fyp.dhumbal.global.util.AuthUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,17 +20,17 @@ public class GameController {
 
     @PostMapping("/{id}/pick")
     public void pickCard(@PathVariable("id") String gameId, @RequestBody GamePickRequest request) {
-        gameService.pickCard(gameId, request);
+        gameService.pickCard(gameId, request, AuthUtil.getLoggedInUserId(), AuthUtil.getLoggedInUserName());
     }
 
     @PostMapping("/{id}/throw")
     public void throwCard(@PathVariable("id") String gameId, @RequestBody GameThrowRequest request) {
-        gameService.throwCard(gameId, request);
+        gameService.throwCard(gameId, request, AuthUtil.getLoggedInUserId(), AuthUtil.getLoggedInUserName());
     }
 
     @PostMapping("/{id}/end")
     public void endGame(@PathVariable("id") String gameId) {
-        gameService.endGame(gameId);
+        gameService.endGame(gameId, AuthUtil.getLoggedInUserId());
     }
 
     @GetMapping("/{id}/result")

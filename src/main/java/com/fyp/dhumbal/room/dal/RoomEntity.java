@@ -13,20 +13,16 @@ import java.util.List;
 @Getter
 @Setter
 public class RoomEntity extends BaseEntity {
-
     @Column(name = "code", unique = true)
     private String code;
-
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private RoomStatusEnum status = RoomStatusEnum.WAITING;
-
     @OneToOne
     private UserEntity owner;
-
     private boolean privateRoom = false;
-
     @OneToMany
     private List<UserEntity> members;
-
+    private int easyAgent = 0;
+    private int hardAgent = 0;
 }

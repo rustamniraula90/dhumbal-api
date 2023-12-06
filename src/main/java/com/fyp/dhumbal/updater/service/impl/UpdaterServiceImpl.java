@@ -24,4 +24,10 @@ public class UpdaterServiceImpl implements UpdaterService {
     public void updateGame(String id, UpdateType type, Object payload) {
         this.simpMessagingTemplate.convertAndSend(GAME_TOPIC + "/" + id, new UpdaterPayload(type, payload));
     }
+
+    @Override
+    public void updateUser(String id, UpdateType type, Object payload) {
+        this.simpMessagingTemplate.convertAndSend(USER_TOPIC + "/" + id, new UpdaterPayload(type, payload));
+
+    }
 }

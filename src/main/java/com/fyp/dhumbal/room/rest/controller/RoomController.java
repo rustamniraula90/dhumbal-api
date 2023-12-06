@@ -1,5 +1,6 @@
 package com.fyp.dhumbal.room.rest.controller;
 
+import com.fyp.dhumbal.agent.AgentConstant;
 import com.fyp.dhumbal.room.rest.model.CreateRoomRequest;
 import com.fyp.dhumbal.room.rest.model.RoomResponse;
 import com.fyp.dhumbal.room.service.RoomService;
@@ -23,6 +24,11 @@ public class RoomController {
         return roomService.createRoom(request);
     }
 
+    @PostMapping("/{id}/bot")
+    public RoomResponse addBot(@PathVariable("id") String id, @RequestParam("type") AgentConstant.Type type) {
+        return roomService.addBot(id, type);
+    }
+
     @PostMapping("/join/random")
     public RoomResponse joinRandomRoom() {
         return roomService.joinRandomRoom();
@@ -33,9 +39,14 @@ public class RoomController {
         return roomService.joinRoom(code);
     }
 
-    @DeleteMapping("/{code}/leave")
-    public void leaveRoom(@PathVariable("code") String code) {
-        roomService.leaveRoom(code);
+    @DeleteMapping("/{id}/leave")
+    public void leaveRoom(@PathVariable("id") String id) {
+        roomService.leaveRoom(id);
+    }
+
+    @DeleteMapping("/{id}/remove/{userId}")
+    public void removeFromRoom(@PathVariable("id") String id, @PathVariable("userId") String userId) {
+        roomService.removeFromRoom(id, userId);
     }
 
     @PostMapping("/{id}/start")

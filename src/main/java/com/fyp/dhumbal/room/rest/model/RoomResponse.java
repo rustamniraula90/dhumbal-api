@@ -15,4 +15,6 @@ public class RoomResponse {
     private UserResponse owner;
     private RoomStatusEnum status;
     private List<UserResponse> members;
+    private int easyAgent = 0;
+    private int hardAgent = 0;
 }

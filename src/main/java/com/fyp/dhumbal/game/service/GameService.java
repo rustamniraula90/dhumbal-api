@@ -11,11 +11,11 @@ public interface GameService {
 
     void startGame(String id);
 
-    void pickCard(String id, GamePickRequest request);
+    void pickCard(String id, GamePickRequest request, String userId, String username);
 
-    void throwCard(String id, GameThrowRequest request);
+    void throwCard(String id, GameThrowRequest request, String userId, String username);
 
-    void endGame(String id);
+    void endGame(String id, String userId);
 
     void finalizeGame(String id);
 

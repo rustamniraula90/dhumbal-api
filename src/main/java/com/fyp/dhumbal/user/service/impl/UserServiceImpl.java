@@ -138,7 +138,6 @@ public class UserServiceImpl implements UserService {
 
     @Scheduled(fixedDelay = 1000 * 10)
     public void deleteUnverifiedUsers() {
-        log.info("Running Scheduler to offline users");
         long now = System.currentTimeMillis();
         userRepository.findByOnlineAndLastOnlineLessThan(true, now - (1000 * 10)).forEach(user -> {
             user.setOnline(false);

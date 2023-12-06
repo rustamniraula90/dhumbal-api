@@ -2,6 +2,7 @@ package com.fyp.dhumbal.friend.rest.controller;
 
 import com.fyp.dhumbal.friend.rest.model.FriendResponse;
 import com.fyp.dhumbal.friend.rest.model.FriendRequest;
+import com.fyp.dhumbal.friend.rest.model.InviteFriendRequest;
 import com.fyp.dhumbal.friend.service.FriendService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -43,5 +44,10 @@ public class FriendController {
     @GetMapping("/requests")
     public List<FriendResponse> getFriendRequests() {
         return friendService.getFriendRequest();
+    }
+
+    @PostMapping("/invite")
+    public void inviteFriendToRoom(@RequestBody InviteFriendRequest request) {
+        friendService.inviteFriendToRoom(request);
     }
 }
