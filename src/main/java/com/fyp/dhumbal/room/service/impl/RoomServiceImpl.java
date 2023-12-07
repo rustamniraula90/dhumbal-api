@@ -145,7 +145,7 @@ public class RoomServiceImpl implements RoomService {
         int easyAgent = roomEntity.getEasyAgent();
         while (easyAgent > 0) {
             UserResponse userResponse = new UserResponse();
-            userResponse.setId("BOT_EASY_" + easyAgent + ";Novice Bot " + easyAgent);
+            userResponse.setId("BOT_EASY_" + easyAgent + AgentConstant.AGENT_ID_SEPARATOR + "Novice Bot " + easyAgent);
             userResponse.setName("Novice Bot " + easyAgent);
             response.getMembers().add(userResponse);
             easyAgent--;
@@ -153,8 +153,8 @@ public class RoomServiceImpl implements RoomService {
         int hardAgent = roomEntity.getHardAgent();
         while (hardAgent > 0) {
             UserResponse userResponse = new UserResponse();
-            userResponse.setId("BOT_HARD_" + hardAgent + ";Expert Bot " + hardAgent);
-            userResponse.setName("Expert Bot "+ hardAgent);
+            userResponse.setId("BOT_HARD_" + hardAgent + AgentConstant.AGENT_ID_SEPARATOR + "Expert Bot " + hardAgent);
+            userResponse.setName("Expert Bot " + hardAgent);
             response.getMembers().add(userResponse);
             hardAgent--;
         }

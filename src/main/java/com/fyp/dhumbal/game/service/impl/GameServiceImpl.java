@@ -1,5 +1,6 @@
 package com.fyp.dhumbal.game.service.impl;
 
+import com.fyp.dhumbal.agent.AgentConstant;
 import com.fyp.dhumbal.agent.event.AgentEventPayload;
 import com.fyp.dhumbal.agent.model.AgentMoveRequest;
 import com.fyp.dhumbal.game.dal.GameEntity;
@@ -13,7 +14,6 @@ import com.fyp.dhumbal.global.error.codes.ErrorCodes;
 import com.fyp.dhumbal.global.error.exception.impl.BadRequestException;
 import com.fyp.dhumbal.global.util.AuthUtil;
 import com.fyp.dhumbal.global.util.CardUtil;
-import com.fyp.dhumbal.global.util.RandomGenerator;
 import com.fyp.dhumbal.room.dal.RoomEntity;
 import com.fyp.dhumbal.room.dal.RoomRepository;
 import com.fyp.dhumbal.room.dal.RoomStatusEnum;
@@ -63,13 +63,13 @@ public class GameServiceImpl implements GameService {
         int easyAgent = room.getEasyAgent();
         int hardAgent = room.getHardAgent();
         while (easyAgent > 0) {
-            String agentId = "BOT_EASY_" + easyAgent + ";Novice Bot " + easyAgent;
+            String agentId = "BOT_EASY_" + easyAgent + AgentConstant.AGENT_ID_SEPARATOR + "Novice Bot " + easyAgent;
             game.getPlayers().add(agentId);
             hands.put(agentId, CardUtil.getRandomCard(allCard, 5));
             easyAgent--;
         }
         while (hardAgent > 0) {
-            String agentId = "BOT_HARD_" + hardAgent + ";Expert Bot " + hardAgent;
+            String agentId = "BOT_HARD_" + hardAgent + AgentConstant.AGENT_ID_SEPARATOR + "Expert Bot " + hardAgent;
             game.getPlayers().add(agentId);
             hands.put(agentId, CardUtil.getRandomCard(allCard, 5));
             hardAgent--;
@@ -137,7 +137,13 @@ public class GameServiceImpl implements GameService {
         if (game.isThrown()) {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Player has already thrown");
         }
-        validateThrownCard(hands.get(userId), request.getCard());
+        List<String> playerHand = hands.get(userId);
+        for (String card : request.getCard()) {
+            if (!playerHand.contains(card)) {
+                throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Invalid card thrown");
+            }
+        }
+        CardUtil.validateThrownCard(request.getCard());
         hands.get(userId).removeAll(request.getCard());
         game.setTempFloor(request.getCard());
         game.setThrown(true);
@@ -167,59 +173,20 @@ public class GameServiceImpl implements GameService {
         }
     }
 
-    private void validateThrownCard(List<String> hand, List<String> thrownCards) {
-        for (String card : thrownCards) {
-            if (!hand.contains(card)) {
-                throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Invalid card thrown");
-            }
-        }
-        int size = thrownCards.size();
-
-        if (size == 1 || isSameValueCards(thrownCards) || isSameColorRun(thrownCards)) {
-            return;
-        }
-        throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Invalid card thrown");
-    }
-
-    private boolean isSameValueCards(List<String> cards) {
-        String val = cards.get(0).split("_")[1];
-        for (String card : cards) {
-            if (!card.split("_")[1].equals(val)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean isSameColorRun(List<String> cards) {
-        if (cards.size() < 3) return false;
-        List<Integer> run = new ArrayList<>();
-        String color = cards.get(0).split("_")[0];
-        for (String card : cards) {
-            String[] colorValue = card.split("_");
-            if (!color.equals(colorValue[0])) {
-                return false;
-            }
-            run.add(Integer.parseInt(colorValue[1]));
-        }
-        Collections.sort(run);
-        for (int i = 1; i < run.size(); i++) {
-            if (run.get(i) != (run.get(i - 1) + 1)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     @Override
     public void endGame(String id, String userId) {
-        GameEntity game = validateGame(id, userId);
+        GameEntity game;
+        if (userId.startsWith("BOT")) {
+            game = gameRepository.findById(id).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Game not found"));
+        } else {
+            game = validateGame(id, userId);
+        }
         Map<String, List<String>> hands = game.getHands();
 
         if (game.isThrown()) {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Can't end game after throwing a card");
         }
-        int sum = getCardValue(hands.get(userId));
+        int sum = CardUtil.getCardValue(hands.get(userId));
 
         if (sum > 5) {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Can't end game with more than 5 points");
@@ -230,7 +197,7 @@ public class GameServiceImpl implements GameService {
             if (player.equals(userId)) {
                 continue;
             }
-            int playerSum = getCardValue(hands.get(player));
+            int playerSum = CardUtil.getCardValue(hands.get(player));
             if (playerSum < sum) {
                 winnerId = player;
                 winningPoints = playerSum;
@@ -280,7 +247,7 @@ public class GameServiceImpl implements GameService {
         for (String player : game.getPlayers()) {
             response.getCardCount().put(player, game.getHands().get(player).size());
         }
-        response.setPoints(getCardValue(response.getHands()));
+        response.setPoints(CardUtil.getCardValue(response.getHands()));
         response.setEnded(game.isEnded());
         return response;
     }
@@ -296,8 +263,8 @@ public class GameServiceImpl implements GameService {
             if (player.startsWith("BOT")) {
                 GameUserResultResponse response = new GameUserResultResponse();
                 response.setUserId(player);
-                response.setUserName(player.split(";")[1]);
-                response.setPoints(getCardValue(game.getHands().get(player)));
+                response.setUserName(player.split(AgentConstant.AGENT_ID_SEPARATOR)[1]);
+                response.setPoints(CardUtil.getCardValue(game.getHands().get(player)));
                 response.setWinner(player.equals(game.getWinner()));
                 response.setScore((game.getWinner().equals(player)) ? gamePoints : -gamePoints);
                 responses.add(response);
@@ -306,7 +273,7 @@ public class GameServiceImpl implements GameService {
                 GameUserResultResponse response = new GameUserResultResponse();
                 response.setUserId(player);
                 response.setUserName(user.getName());
-                response.setPoints(getCardValue(game.getHands().get(player)));
+                response.setPoints(CardUtil.getCardValue(game.getHands().get(player)));
                 response.setWinner(player.equals(game.getWinner()));
                 response.setScore((game.getWinner().equals(player)) ? gamePoints : -gamePoints);
                 responses.add(response);
@@ -324,14 +291,5 @@ public class GameServiceImpl implements GameService {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Not your turn");
         }
         return game;
-    }
-
-    private int getCardValue(List<String> cards) {
-        int sum = 0;
-        for (String card : cards) {
-            String[] split = card.split("_");
-            sum += Integer.parseInt(split[1]);
-        }
-        return sum;
     }
 }
