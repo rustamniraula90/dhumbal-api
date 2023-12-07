@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -15,4 +17,5 @@ public class GameUserResultResponse {
     private Integer points;
     private Boolean winner = false;
     private Integer score;
+    private List<String> cards;
 }

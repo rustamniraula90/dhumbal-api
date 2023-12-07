@@ -259,25 +259,22 @@ public class GameServiceImpl implements GameService {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Game has not ended yet");
         }
         List<GameUserResultResponse> responses = new ArrayList<>();
+        Map<String, List<String>> hands = game.getHands();
         for (String player : game.getPlayers()) {
+            GameUserResultResponse response = new GameUserResultResponse();
             if (player.startsWith("BOT")) {
-                GameUserResultResponse response = new GameUserResultResponse();
                 response.setUserId(player);
                 response.setUserName(player.split(AgentConstant.AGENT_ID_SEPARATOR)[1]);
-                response.setPoints(CardUtil.getCardValue(game.getHands().get(player)));
-                response.setWinner(player.equals(game.getWinner()));
-                response.setScore((game.getWinner().equals(player)) ? gamePoints : -gamePoints);
-                responses.add(response);
             } else {
                 UserEntity user = userRepository.findById(player).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "user not found"));
-                GameUserResultResponse response = new GameUserResultResponse();
                 response.setUserId(player);
                 response.setUserName(user.getName());
-                response.setPoints(CardUtil.getCardValue(game.getHands().get(player)));
-                response.setWinner(player.equals(game.getWinner()));
-                response.setScore((game.getWinner().equals(player)) ? gamePoints : -gamePoints);
-                responses.add(response);
             }
+            response.setPoints(CardUtil.getCardValue(game.getHands().get(player)));
+            response.setWinner(player.equals(game.getWinner()));
+            response.setScore((game.getWinner().equals(player)) ? gamePoints : -gamePoints);
+            response.setCards(hands.get(player));
+            responses.add(response);
         }
         return responses;
     }

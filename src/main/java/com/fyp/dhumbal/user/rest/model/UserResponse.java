@@ -16,7 +16,7 @@ public class UserResponse {
     private String id;
     private String name;
     private String email;
-    private Boolean online;
+    private boolean online;
     private FriendStatus friendshipStatus;
 
     public UserResponse(String id, String name) {

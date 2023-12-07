@@ -158,6 +158,20 @@ public class RoomServiceImpl implements RoomService {
             response.getMembers().add(userResponse);
             hardAgent--;
         }
+        // Rotate till current user is on 0 index
+        int ownIndex = 0;
+        for (int i = 0; i < response.getMembers().size(); i++) {
+            if (response.getMembers().get(i).getId().equals(AuthUtil.getLoggedInUserId())) {
+                ownIndex = i;
+                break;
+            }
+        }
+        // The 4 person view is as 0,3,1,2, so swap array to make sequential turn
+        Collections.rotate(response.getMembers(), -ownIndex);
+        if (response.getMembers().size() == 4) {
+            Collections.swap(response.getMembers(), 1, 3);
+            Collections.swap(response.getMembers(), 2, 1);
+        }
         return response;
     }
 

@@ -23,6 +23,10 @@ public interface FriendMapper {
     }
 
     default List<FriendResponse> toResponse(List<FriendEntity> friends, String currentUserId) {
-        return friends.stream().map(f -> toResponse(f, currentUserId)).toList();
+        return friends.stream().map(f -> toResponse(f, currentUserId)).sorted((a, b) -> {
+            if (a.getUser().isOnline() && !b.getUser().isOnline()) return -1;
+            else if (!a.getUser().isOnline() && b.getUser().isOnline()) return 1;
+            return 0;
+        }).toList();
     }
 }
