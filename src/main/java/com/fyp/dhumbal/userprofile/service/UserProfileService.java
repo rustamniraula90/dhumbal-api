@@ -8,6 +8,6 @@ public interface UserProfileService {
 
     void createUserProfile(UserEntity userEntity);
 
-    void updateStatus(String userId, boolean winner);
+    void updateStatus(String userId, int gamePoints);
 
 }

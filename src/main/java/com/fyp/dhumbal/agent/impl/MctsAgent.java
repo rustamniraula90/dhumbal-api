@@ -3,16 +3,21 @@ package com.fyp.dhumbal.agent.impl;
 import com.fyp.dhumbal.agent.AgentConstant;
 import com.fyp.dhumbal.agent.GameAgent;
 import com.fyp.dhumbal.agent.model.AgentMoveRequest;
+import com.fyp.dhumbal.game.dal.GameRepository;
 import com.fyp.dhumbal.game.service.GameService;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
 
-@Component(AgentConstant.HARD_AGENT)
+@Component(AgentConstant.MCTS_AGENT)
 public class MctsAgent extends GameAgent {
-    public MctsAgent(GameService gameService) {
+
+    private final GameRepository gameRepository;
+
+    public MctsAgent(GameService gameService, GameRepository gameRepository) {
         super(gameService);
+        this.gameRepository = gameRepository;
     }
 
     @Override

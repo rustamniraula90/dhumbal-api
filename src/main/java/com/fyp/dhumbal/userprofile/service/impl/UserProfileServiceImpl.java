@@ -19,8 +19,8 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final UserProfileRepository userProfileRepository;
     private final UserProfileMapper userProfileMapper;
 
-    @Value("${dhumbal.game.points}")
-    private Integer gamePoints;
+    @Value("${dhumbal.game.points.multiplier}")
+    private Integer gamePointMultiplier;
 
     @Override
     public GetUserProfileResponse getUserProfileById(String userId) {
@@ -36,18 +36,16 @@ public class UserProfileServiceImpl implements UserProfileService {
     }
 
     @Override
-    public void updateStatus(String userId, boolean winner) {
+    public void updateStatus(String userId, int gamePoints) {
         UserProfileEntity userProfile = userProfileRepository.findById(userId)
                 .orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "User not found"));
+        boolean winner = gamePoints > 0;
         userProfile.setGamesPlayed(userProfile.getGamesPlayed() + 1);
+        userProfile.setTotalPoints(userProfile.getTotalPoints() + (gamePoints * gamePointMultiplier));
         if (winner) {
             userProfile.setGamesWon(userProfile.getGamesWon() + 1);
-            userProfile.setTotalPoints(userProfile.getTotalPoints() + gamePoints);
         } else {
             userProfile.setGamesLost(userProfile.getGamesLost() + 1);
-            if ((userProfile.getTotalPoints() - gamePoints) > 0) {
-                userProfile.setTotalPoints(userProfile.getTotalPoints() - gamePoints);
-            }
         }
         userProfileRepository.save(userProfile);
     }

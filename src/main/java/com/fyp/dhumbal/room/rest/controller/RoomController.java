@@ -25,8 +25,8 @@ public class RoomController {
     }
 
     @PostMapping("/{id}/bot")
-    public RoomResponse addBot(@PathVariable("id") String id, @RequestParam("type") AgentConstant.Type type) {
-        return roomService.addBot(id, type);
+    public RoomResponse addBot(@PathVariable("id") String id, @RequestParam("level") Integer level) {
+        return roomService.addBot(id, level);
     }
 
     @PostMapping("/join/random")

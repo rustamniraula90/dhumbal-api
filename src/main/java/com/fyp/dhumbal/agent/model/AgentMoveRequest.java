@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 public class AgentMoveRequest implements Serializable {
     private String agentId;
-    private String agentType;
+    private Integer agentLevel;
     private String gameId;
     private MoveType moveType;
     private List<String> hand;

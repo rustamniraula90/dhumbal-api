@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -23,6 +24,8 @@ public class RoomEntity extends BaseEntity {
     private boolean privateRoom = false;
     @OneToMany
     private List<UserEntity> members;
-    private int easyAgent = 0;
-    private int hardAgent = 0;
+    @ElementCollection(targetClass = Integer.class, fetch = FetchType.EAGER)
+    @CollectionTable(name = "room_agent", joinColumns = @JoinColumn(name = "room_id"))
+    @Column(name = "agent", nullable = false)
+    private List<Integer> agent = new ArrayList<>();
 }

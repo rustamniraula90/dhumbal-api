@@ -67,7 +67,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     public RoomResponse joinRoom(RoomEntity room) {
-        if ((room.getMembers().size() + room.getEasyAgent() + room.getHardAgent()) >= roomMemberMax) {
+        if (room.getMembers().size() + room.getAgent().size() >= roomMemberMax) {
             throw new BadRequestException(ErrorCodes.ROOM_FULL, "Room is full");
         }
         room.getMembers().add(userRepository.findById(AuthUtil.getLoggedInUserId()).orElseThrow(() -> new BadRequestException(ErrorCodes.INTERNAL_SERVER_ERROR, "User not found")));
@@ -88,7 +88,7 @@ public class RoomServiceImpl implements RoomService {
         List<RoomEntity> waitingRooms = roomRepository.findByStatusAndPrivateRoom(RoomStatusEnum.WAITING, false);
         if (!waitingRooms.isEmpty()) {
             for (RoomEntity room : waitingRooms) {
-                if ((room.getMembers().size() + room.getEasyAgent() + room.getHardAgent()) < roomMemberMax) {
+                if (room.getMembers().size() + room.getAgent().size() < roomMemberMax) {
                     return joinRoom(room);
                 }
             }
@@ -125,7 +125,7 @@ public class RoomServiceImpl implements RoomService {
         String userId = AuthUtil.getLoggedInUserId();
         if (!roomEntity.getOwner().getId().equals(userId)) {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "You are not owner of this room");
-        } else if (roomEntity.getMembers().size() + roomEntity.getEasyAgent() + roomEntity.getHardAgent() < 2) {
+        } else if (roomEntity.getMembers().size() + roomEntity.getAgent().size() < 2) {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Room must have at least 2 members");
         } else if (roomEntity.getStatus() != RoomStatusEnum.WAITING) {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "Room is already started");
@@ -142,21 +142,11 @@ public class RoomServiceImpl implements RoomService {
     public RoomResponse getRoomById(String roomId) {
         RoomEntity roomEntity = roomRepository.findById(roomId).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Room not found"));
         RoomResponse response = roomMapper.toResponse(roomEntity);
-        int easyAgent = roomEntity.getEasyAgent();
-        while (easyAgent > 0) {
+        for (Integer agent : roomEntity.getAgent()) {
             UserResponse userResponse = new UserResponse();
-            userResponse.setId("BOT_EASY_" + easyAgent + AgentConstant.AGENT_ID_SEPARATOR + "Novice Bot " + easyAgent);
-            userResponse.setName("Novice Bot " + easyAgent);
+            userResponse.setId("BOT_" + RandomGenerator.generateAlphabetic(3) + AgentConstant.AGENT_ID_SEPARATOR + agent);
+            userResponse.setName("Level " + agent + " Agent");
             response.getMembers().add(userResponse);
-            easyAgent--;
-        }
-        int hardAgent = roomEntity.getHardAgent();
-        while (hardAgent > 0) {
-            UserResponse userResponse = new UserResponse();
-            userResponse.setId("BOT_HARD_" + hardAgent + AgentConstant.AGENT_ID_SEPARATOR + "Expert Bot " + hardAgent);
-            userResponse.setName("Expert Bot " + hardAgent);
-            response.getMembers().add(userResponse);
-            hardAgent--;
         }
         // Rotate till current user is on 0 index
         int ownIndex = 0;
@@ -166,7 +156,7 @@ public class RoomServiceImpl implements RoomService {
                 break;
             }
         }
-        // The 4 person view is as 0,3,1,2, so swap array to make sequential turn
+        // The 4-person view is as 0,3,1,2, so swap array to make sequential turn
         Collections.rotate(response.getMembers(), -ownIndex);
         if (response.getMembers().size() == 4) {
             Collections.swap(response.getMembers(), 1, 3);
@@ -177,22 +167,17 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional
-    public RoomResponse addBot(String roomId, AgentConstant.Type type) {
+    public RoomResponse addBot(String roomId, Integer level) {
         RoomEntity roomEntity = roomRepository.findById(roomId).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Room not found"));
         if (!roomEntity.getOwner().getId().equals(AuthUtil.getLoggedInUserId())) {
             throw new BadRequestException(ErrorCodes.BAD_REQUEST, "You are not owner of this room");
         }
-        if ((roomEntity.getMembers().size() + roomEntity.getEasyAgent() + roomEntity.getHardAgent()) >= roomMemberMax) {
+        if (roomEntity.getMembers().size() + roomEntity.getAgent().size() >= roomMemberMax) {
             throw new BadRequestException(ErrorCodes.ROOM_FULL, "Room is full");
         }
         Map<String, String> detail = new HashMap<>();
-        if (type == AgentConstant.Type.EASY) {
-            roomEntity.setEasyAgent(roomEntity.getEasyAgent() + 1);
-            detail.put("name", "Novice Bot");
-        } else if (type == AgentConstant.Type.HARD) {
-            roomEntity.setHardAgent(roomEntity.getHardAgent() + 1);
-            detail.put("name", "Expert Bot");
-        }
+        roomEntity.getAgent().add(level);
+        detail.put("name", "Level " + level + " Agent");
         updaterService.updateRoom(roomEntity.getId(), UpdateType.PLAYER_JOINED, detail);
         return roomMapper.toResponse(roomRepository.save(roomEntity));
     }
@@ -207,14 +192,15 @@ public class RoomServiceImpl implements RoomService {
         Map<String, String> detail = new HashMap<>();
         detail.put("id", userId);
         if (userId.startsWith("BOT")) {
-            String[] agent = userId.split("_");
-            if (AgentConstant.EASY_AGENT.equals(agent[1]) && roomEntity.getEasyAgent() > 0) {
-                roomEntity.setEasyAgent(roomEntity.getEasyAgent() - 1);
-                detail.put("name", "Novice Bot");
-            } else if (AgentConstant.HARD_AGENT.equals(agent[1]) && roomEntity.getHardAgent() > 0) {
-                roomEntity.setHardAgent(roomEntity.getHardAgent() - 1);
-                detail.put("name", "Expert Bot");
+            String[] agent = userId.split(AgentConstant.AGENT_ID_SEPARATOR);
+            Integer agentLevel = Integer.parseInt(agent[1]);
+            for (int i = 0; i < roomEntity.getAgent().size(); i++) {
+                if (roomEntity.getAgent().get(i).equals(agentLevel)) {
+                    roomEntity.getAgent().remove(i);
+                    break;
+                }
             }
+            detail.put("name", "Level " + agentLevel + " Agent");
         } else {
             for (UserEntity entity : roomEntity.getMembers()) {
                 if (entity.getId().equals(userId)) {

@@ -17,7 +17,7 @@ public interface RoomService {
 
     RoomResponse getRoomById(String roomId);
 
-    RoomResponse addBot(String roomId, AgentConstant.Type type);
+    RoomResponse addBot(String roomId,Integer level);
 
     void removeFromRoom(String id, String userId);
 }

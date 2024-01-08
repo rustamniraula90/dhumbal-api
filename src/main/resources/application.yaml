@@ -55,5 +55,8 @@ dhumbal:
     member:
       max: 4
   game:
-    points: 100
+    points:
+      multiplier: 10
+    card:
+      count: 7
 

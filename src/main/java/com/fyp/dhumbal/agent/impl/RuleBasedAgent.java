@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component(AgentConstant.EASY_AGENT)
+@Component(AgentConstant.BASIC_AGENT)
 public class RuleBasedAgent extends GameAgent {
     public RuleBasedAgent(GameService gameService) {
         super(gameService);
