@@ -2,19 +2,16 @@ package com.fyp.dhumbal.game.service.impl;
 
 import com.fyp.dhumbal.agent.AgentConstant;
 import com.fyp.dhumbal.agent.event.AgentEventPayload;
+import com.fyp.dhumbal.agent.impl.ismcts.Game;
 import com.fyp.dhumbal.agent.model.AgentMoveRequest;
 import com.fyp.dhumbal.game.dal.GameEntity;
 import com.fyp.dhumbal.game.dal.GameRepository;
-import com.fyp.dhumbal.game.rest.model.GamePickRequest;
-import com.fyp.dhumbal.game.rest.model.GameStateResponse;
-import com.fyp.dhumbal.game.rest.model.GameThrowRequest;
-import com.fyp.dhumbal.game.rest.model.GameUserResultResponse;
+import com.fyp.dhumbal.game.rest.model.*;
 import com.fyp.dhumbal.game.service.GameService;
 import com.fyp.dhumbal.global.error.codes.ErrorCodes;
 import com.fyp.dhumbal.global.error.exception.impl.BadRequestException;
 import com.fyp.dhumbal.global.util.AuthUtil;
 import com.fyp.dhumbal.global.util.CardUtil;
-import com.fyp.dhumbal.global.util.RandomGenerator;
 import com.fyp.dhumbal.room.dal.RoomEntity;
 import com.fyp.dhumbal.room.dal.RoomRepository;
 import com.fyp.dhumbal.room.dal.RoomStatusEnum;
@@ -22,15 +19,18 @@ import com.fyp.dhumbal.updater.model.UpdateType;
 import com.fyp.dhumbal.updater.service.UpdaterService;
 import com.fyp.dhumbal.user.dal.UserEntity;
 import com.fyp.dhumbal.user.dal.UserRepository;
+import com.fyp.dhumbal.user.dal.UserType;
 import com.fyp.dhumbal.userprofile.service.UserProfileService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GameServiceImpl implements GameService {
@@ -64,10 +64,12 @@ public class GameServiceImpl implements GameService {
         for (String player : game.getPlayers()) {
             hands.put(player, CardUtil.getRandomCard(allCard, cardCount));
         }
+        int agentIndex = 0;
         for (Integer agent : room.getAgent()) {
-            String agentId = "BOT_" + RandomGenerator.generateAlphabetic(3) + AgentConstant.AGENT_ID_SEPARATOR + agent;
+            String agentId = "BOT_" + agentIndex + AgentConstant.AGENT_ID_SEPARATOR + agent;
             game.getPlayers().add(agentId);
             hands.put(agentId, CardUtil.getRandomCard(allCard, cardCount));
+            agentIndex++;
         }
         game.setHands(hands);
         game.setFloor(new ArrayList<>());
@@ -157,6 +159,7 @@ public class GameServiceImpl implements GameService {
         if (game.getTurn().startsWith("BOT")) {
             String[] agent = game.getTurn().split(AgentConstant.AGENT_ID_SEPARATOR);
             AgentMoveRequest agentMoveRequest = AgentMoveRequest.builder()
+                    .agentName("Level " + agent[1] + " Agent")
                     .agentId(game.getTurn())
                     .agentLevel(Integer.parseInt(agent[1]))
                     .hand(game.getHands().get(game.getTurn()))
@@ -266,7 +269,7 @@ public class GameServiceImpl implements GameService {
             GameUserResultResponse response = new GameUserResultResponse();
             if (player.startsWith("BOT")) {
                 response.setUserId(player);
-                response.setUserName(player.split(AgentConstant.AGENT_ID_SEPARATOR)[1]);
+                response.setUserName("Level " + player.split(AgentConstant.AGENT_ID_SEPARATOR)[1] + " Agent");
             } else {
                 UserEntity user = userRepository.findById(player).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "user not found"));
                 response.setUserId(player);
@@ -284,6 +287,29 @@ public class GameServiceImpl implements GameService {
             responses.add(response);
         }
         winnerResponse.setScore(gamePoint * gamePointMultiplier);
+        return responses;
+    }
+
+    @Override
+    public List<RunningGameResponse> getRunningGames() {
+        List<GameEntity> runningGame = gameRepository.findAll();
+        List<RunningGameResponse> responses = new ArrayList<>();
+        for (GameEntity game : runningGame) {
+            if (!game.isEnded()) {
+                try {
+                    RoomEntity room = roomRepository.findById(game.getId()).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Room not found"));
+                    RunningGameResponse response = new RunningGameResponse();
+                    response.setId(game.getId());
+                    response.setPlayerCount(game.getPlayers().size());
+                    response.setCode(room.getCode());
+                    response.setOwner(room.getOwner().getName());
+                    responses.add(response);
+                } catch (BadRequestException e) {
+                    log.warn("Room not found for game {}. Deleting the game.", game.getId());
+                    gameRepository.delete(game);
+                }
+            }
+        }
         return responses;
     }
 

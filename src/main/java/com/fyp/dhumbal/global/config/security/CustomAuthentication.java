@@ -1,6 +1,7 @@
 package com.fyp.dhumbal.global.config.security;
 
 import com.fyp.dhumbal.user.dal.UserEntity;
+import com.fyp.dhumbal.user.dal.UserType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -15,6 +16,7 @@ public class CustomAuthentication implements Authentication {
     private final String name;
     private final String refreshTokenId;
     private final String userId;
+    private final UserType userType;
     private final String email;
     private final List<SimpleGrantedAuthority> permissions;
     private boolean authenticated = true;
@@ -25,6 +27,7 @@ public class CustomAuthentication implements Authentication {
         this.userId = userEntity.getId();
         this.email = userEntity.getEmail();
         this.name = userEntity.getName();
+        this.userType = userEntity.getUserType();
         this.permissions = Collections.singletonList(new SimpleGrantedAuthority(userEntity.getUserType().name()));
     }
 
@@ -73,5 +76,9 @@ public class CustomAuthentication implements Authentication {
 
     public String getTokenId() {
         return tokenId;
+    }
+
+    public UserType getUserType() {
+        return userType;
     }
 }

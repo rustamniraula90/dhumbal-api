@@ -1,9 +1,6 @@
 package com.fyp.dhumbal.game.rest.controller;
 
-import com.fyp.dhumbal.game.rest.model.GamePickRequest;
-import com.fyp.dhumbal.game.rest.model.GameStateResponse;
-import com.fyp.dhumbal.game.rest.model.GameThrowRequest;
-import com.fyp.dhumbal.game.rest.model.GameUserResultResponse;
+import com.fyp.dhumbal.game.rest.model.*;
 import com.fyp.dhumbal.game.service.GameService;
 import com.fyp.dhumbal.global.util.AuthUtil;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +38,11 @@ public class GameController {
     @GetMapping("/{id}/state")
     public GameStateResponse getGameState(@PathVariable("id") String gameId) {
         return gameService.getGameState(gameId);
+    }
+
+    @GetMapping
+    public List<RunningGameResponse> getRunningGames() {
+        return gameService.getRunningGames();
     }
 
 }

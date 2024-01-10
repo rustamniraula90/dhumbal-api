@@ -49,6 +49,11 @@ dhumbal:
     otp:
       expiry: 60
       length: 15
+  admin:
+    default:
+      create: true
+      email: admin@admin.com
+      password: admin
   room:
     code:
       length: 5
@@ -58,5 +63,5 @@ dhumbal:
     points:
       multiplier: 10
     card:
-      count: 7
+      count: 5
 

@@ -1,6 +1,7 @@
 package com.fyp.dhumbal.global.util;
 
 import com.fyp.dhumbal.global.config.security.CustomAuthentication;
+import com.fyp.dhumbal.user.dal.UserType;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 public class AuthUtil {
@@ -29,6 +30,15 @@ public class AuthUtil {
         if (SecurityContextHolder.getContext().getAuthentication() != null &&
                 (SecurityContextHolder.getContext().getAuthentication() instanceof CustomAuthentication authentication)) {
             return authentication.getRefreshTokenId();
+
+        }
+        return null;
+    }
+
+    public static UserType getLoggedInUserType() {
+        if (SecurityContextHolder.getContext().getAuthentication() != null &&
+                (SecurityContextHolder.getContext().getAuthentication() instanceof CustomAuthentication authentication)) {
+            return authentication.getUserType();
 
         }
         return null;

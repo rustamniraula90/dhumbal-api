@@ -6,6 +6,8 @@ import com.fyp.dhumbal.global.util.AuthUtil;
 import com.fyp.dhumbal.leaderboard.mapper.LeaderBoardMapper;
 import com.fyp.dhumbal.leaderboard.rest.model.LeaderBoardResponse;
 import com.fyp.dhumbal.leaderboard.service.LeaderBoardService;
+import com.fyp.dhumbal.user.dal.UserEntity;
+import com.fyp.dhumbal.user.dal.UserType;
 import com.fyp.dhumbal.userprofile.dal.UserProfileEntity;
 import com.fyp.dhumbal.userprofile.dal.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +37,7 @@ public class LeaderBoardServiceImpl implements LeaderBoardService {
                 hasCurrentUser = true;
             }
         }
-        if (!hasCurrentUser) {
+        if (!hasCurrentUser && !Objects.equals(AuthUtil.getLoggedInUserType(), UserType.ADMIN)) {
             UserProfileEntity currentUser = userProfileRepository.findById(currentUserId).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "User not found"));
             if (currentUser != null) {
                 LeaderBoardResponse currentUserResponse = leaderBoardMapper.toLeaderBoardResponse(currentUser);

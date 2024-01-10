@@ -142,11 +142,13 @@ public class RoomServiceImpl implements RoomService {
     public RoomResponse getRoomById(String roomId) {
         RoomEntity roomEntity = roomRepository.findById(roomId).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Room not found"));
         RoomResponse response = roomMapper.toResponse(roomEntity);
+        int agentIndex = 0;
         for (Integer agent : roomEntity.getAgent()) {
             UserResponse userResponse = new UserResponse();
-            userResponse.setId("BOT_" + RandomGenerator.generateAlphabetic(3) + AgentConstant.AGENT_ID_SEPARATOR + agent);
+            userResponse.setId("BOT_" + agentIndex + AgentConstant.AGENT_ID_SEPARATOR + agent);
             userResponse.setName("Level " + agent + " Agent");
             response.getMembers().add(userResponse);
+            agentIndex++;
         }
         // Rotate till current user is on 0 index
         int ownIndex = 0;

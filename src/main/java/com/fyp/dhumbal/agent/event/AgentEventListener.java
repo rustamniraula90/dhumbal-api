@@ -17,6 +17,6 @@ public class AgentEventListener implements ApplicationListener<AgentEventPayload
 
     @Override
     public void onApplicationEvent(AgentEventPayload event) {
-        agentMap.get(AgentConstant.BASIC_AGENT).move(event.getRequest());
+        agentMap.get(AgentConstant.MCTS_AGENT).move(event.getRequest());
     }
 }

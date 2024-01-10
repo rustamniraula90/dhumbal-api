@@ -4,7 +4,6 @@ import com.fyp.dhumbal.agent.model.AgentMoveRequest;
 import com.fyp.dhumbal.game.rest.model.GamePickRequest;
 import com.fyp.dhumbal.game.rest.model.GameThrowRequest;
 import com.fyp.dhumbal.game.service.GameService;
-import com.fyp.dhumbal.global.error.codes.ErrorCodes;
 import com.fyp.dhumbal.global.util.CardUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,12 +20,6 @@ public abstract class GameAgent {
 
     @Async
     public void move(AgentMoveRequest request) {
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            log.error("Error while sleeping bot", e);
-        }
-        String[] agent = request.getAgentId().split(AgentConstant.AGENT_ID_SEPARATOR);
         if (request.getMoveType() == AgentMoveRequest.MoveType.THROW) {
             int cardValue = CardUtil.getCardValue(request.getHand());
             if (cardValue <= 5 && shouldShow(request)) {
@@ -34,11 +27,11 @@ public abstract class GameAgent {
                 return;
             }
             List<String> cardsToThrow = getCardsToThrow(request);
-            gameService.throwCard(request.getGameId(), new GameThrowRequest(cardsToThrow), request.getAgentId(), agent[1]);
+            gameService.throwCard(request.getGameId(), new GameThrowRequest(cardsToThrow), request.getAgentId(), request.getAgentName());
         } else {
             String cardToPick = getCardToPick(request);
             boolean deck = cardToPick.equals(DECK);
-            gameService.pickCard(request.getGameId(), new GamePickRequest(!deck, deck ? 0 : request.getChoices().indexOf(cardToPick)), request.getAgentId(), agent[1]);
+            gameService.pickCard(request.getGameId(), new GamePickRequest(deck, deck ? 0 : request.getChoices().indexOf(cardToPick)), request.getAgentId(), request.getAgentName());
         }
     }
 

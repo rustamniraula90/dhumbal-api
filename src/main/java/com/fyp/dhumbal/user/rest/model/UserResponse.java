@@ -2,6 +2,7 @@ package com.fyp.dhumbal.user.rest.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fyp.dhumbal.friend.dal.FriendshipStatus;
+import com.fyp.dhumbal.user.dal.UserType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,7 @@ public class UserResponse {
     private String email;
     private boolean online;
     private FriendStatus friendshipStatus;
+    private UserType userType;
 
     public UserResponse(String id, String name) {
         this.id = id;

@@ -11,6 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AgentMoveRequest implements Serializable {
+    private String agentName;
     private String agentId;
     private Integer agentLevel;
     private String gameId;
