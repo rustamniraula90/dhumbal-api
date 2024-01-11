@@ -64,4 +64,6 @@ dhumbal:
       multiplier: 10
     card:
       count: 5
+  agent:
+    randomize: true
 

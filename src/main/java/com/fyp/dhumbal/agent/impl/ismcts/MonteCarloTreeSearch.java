@@ -21,6 +21,8 @@ public class MonteCarloTreeSearch {
     private List<String> deck;
     private List<String> floor;
     private List<String> unknownCards;
+    private boolean randomize;
+    private int handSize;
 
     private int simulationCount;
 
@@ -56,18 +58,14 @@ public class MonteCarloTreeSearch {
     }
 
     public void determinization(Node node) {
-        List<String> unknownCardsCopy = new ArrayList<>(unknownCards);
-        for (String player : players) {
-            if (!player.equals(node.getTurn())) {
-                List<String> playerCardsCopy = new ArrayList<>(playerCards.get(player));
-                int cardCount = playerCardsCopy.size();
-                for (int i = 0; i < cardCount; i++) {
-                    int randomIndex = (int) (Math.random() * playerCardsCopy.size());
-                    String randomCard = playerCardsCopy.get(randomIndex);
-                    playerCardsCopy.remove(randomIndex);
-                    unknownCardsCopy.add(randomCard);
+        if (randomize) {
+            List<String> unknownCardsCopy = new ArrayList<>(unknownCards);
+            for (String player : players) {
+                if (!player.equals(node.getTurn())) {
+                    playerCards.put(player, CardUtil.getRandomCard(unknownCardsCopy, handSize));
                 }
             }
+            deck = new ArrayList<>(unknownCardsCopy);
         }
     }
 

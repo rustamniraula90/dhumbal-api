@@ -10,6 +10,7 @@ import com.fyp.dhumbal.game.service.GameService;
 import com.fyp.dhumbal.global.error.codes.ErrorCodes;
 import com.fyp.dhumbal.global.error.exception.impl.BadRequestException;
 import com.fyp.dhumbal.global.util.CardUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -20,6 +21,12 @@ import java.util.List;
 public class MctsAgent extends GameAgent {
 
     private final GameRepository gameRepository;
+
+    @Value("${dhumbal.agent.randomize}")
+    private boolean randomize;
+
+    @Value("${dhumbal.game.card.count}")
+    private int handCount;
 
     public MctsAgent(GameService gameService, GameRepository gameRepository) {
         super(gameService);
@@ -58,6 +65,8 @@ public class MctsAgent extends GameAgent {
                 .deck(new ArrayList<>(game.getDeck()))
                 .unknownCards(allCards)
                 .currentPlayer(agentId)
+                .randomize(randomize)
+                .handSize(handCount)
                 .build();
     }
 }
