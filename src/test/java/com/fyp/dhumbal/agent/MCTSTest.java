@@ -15,10 +15,8 @@ class MCTSTest {
         players.add("1");
         players.add("2");
         HashMap<String, List<String>> hands = new HashMap<>();
-        hands.put("1", Arrays.asList("S_1", "S_2", "S_3", "H_12"));
-        hands.put("2", Arrays.asList("D_12", "H_2"));
+        hands.put("1", Arrays.asList("S_1", "S_2", "S_3", "H_12", "D_12"));
         allCard.removeAll(hands.get("1"));
-        allCard.removeAll(hands.get("2"));
         String choice = "C_12";
         allCard.remove(choice);
         List<String> choices = new ArrayList<>();
@@ -31,6 +29,8 @@ class MCTSTest {
                 .choices(choices)
                 .deck(allCard)
                 .currentPlayer("1")
+                .randomize(true)
+                .handSize(5)
                 .unknownCards(new ArrayList<>(allCard))
                 .build();
         System.out.println(mcts.getNextThrow(1000));
@@ -63,6 +63,7 @@ class MCTSTest {
                 .floor(new ArrayList<>())
                 .choices(choices)
                 .deck(allCard)
+                .randomize(false)
                 .currentPlayer(players.get(0))
                 .unknownCards(new ArrayList<>(allCard))
                 .build();

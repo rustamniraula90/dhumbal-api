@@ -17,7 +17,7 @@ import java.util.Map;
 @Setter
 @Slf4j
 public class Game {
-    private static final int MAX_TURNS_SIMULATION = 10000;
+    private static final int MAX_TURNS_SIMULATION = 1000;
     private String winner;
     private boolean hasThrown;
     private List<String> players;
