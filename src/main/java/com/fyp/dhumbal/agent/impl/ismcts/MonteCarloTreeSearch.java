@@ -35,7 +35,7 @@ public class MonteCarloTreeSearch {
 
     public String getNextChoice(int simulationTimeMillis) {
         String choice = run(simulationTimeMillis, true).getChoice();
-        log.info("Total {} simulations ran for Pick in {} milliseconds with result {} for hand {} and choice {}", simulationCount, simulationTimeMillis, choice, playerCards.get(currentPlayer), choices);
+        log.info("Total {} simulations ran for Pick in {} milliseconds with result {} for hand {}, choice {} and deck {}", simulationCount, simulationTimeMillis, choice, playerCards.get(currentPlayer), choices, deck.get(deck.size() - 1));
         return choices.contains(choice) ? choice : AgentUtil.DECK;
     }
 
@@ -46,15 +46,16 @@ public class MonteCarloTreeSearch {
         while (System.currentTimeMillis() < endTime) {
             determinization(tree.getRootNode());
             Node selectedNode = selection(tree.getRootNode());
-            if (selectedNode.getChildren().isEmpty()) {
-                expansion(selectedNode);
-            }
-            Node nodeToExplore = selectedNode.getRandomChild();
-            String winner = simulation(nodeToExplore);
-            backpropagation(nodeToExplore, winner);
+            if (selectedNode.isPlayed()) expansion(selectedNode);
+            if (!selectedNode.getChildren().isEmpty())
+                selectedNode = selectedNode.getRandomChild();
+            String winner = simulation(selectedNode);
+            backpropagation(selectedNode, winner);
             simulationCount++;
         }
-        return tree.getRootNode().getChildWithMaxScore();
+        return tree.getRootNode().
+
+                getChildWithMaxScore();
     }
 
     public void determinization(Node node) {
@@ -90,8 +91,10 @@ public class MonteCarloTreeSearch {
                 game.getDeck().remove(choice);
                 game.getPlayerCards().get(node.getTurn()).add(choice);
                 game.setHasThrown(false);
-                game.getFloor().addAll(choices);
-                game.setChoices(game.getTempChoices());
+                game.getFloor().addAll(new ArrayList<>(game.getChoices()));
+                game.setChoices(new ArrayList<>(game.getTempChoices()));
+                game.setTempChoices(new ArrayList<>());
+                game.setWinner(null);
                 Node newNode = Node.builder()
                         .parent(node)
                         .children(new ArrayList<>())
@@ -104,22 +107,27 @@ public class MonteCarloTreeSearch {
                 node.getChildren().add(newNode);
             }
         } else {
-            List<List<String>> possibleMoves = node.getGame().getPossibleMoves(node.getTurn());
-            for (List<String> move : possibleMoves) {
-                Game game = node.getGame().copy();
-                game.getPlayerCards().get(node.getTurn()).removeAll(move);
-                game.setTempChoices(move);
-                game.setHasThrown(true);
-                Node newNode = Node.builder()
-                        .parent(node)
-                        .children(new ArrayList<>())
-                        .turn(node.getTurn())
-                        .game(game)
-                        .move(move)
-                        .score(0)
-                        .visits(0)
-                        .build();
-                node.getChildren().add(newNode);
+            if (CardUtil.getCardValue(node.getGame().getPlayerCards().get(node.getTurn())) <= 5) {
+                node.getGame().setWinner(node.getTurn());
+            } else {
+                List<List<String>> possibleMoves = node.getGame().getPossibleMoves(node.getTurn());
+                for (List<String> move : possibleMoves) {
+                    Game game = node.getGame().copy();
+                    game.getPlayerCards().get(node.getTurn()).removeAll(move);
+                    game.setTempChoices(move);
+                    game.setHasThrown(true);
+                    game.setWinner(null);
+                    Node newNode = Node.builder()
+                            .parent(node)
+                            .children(new ArrayList<>())
+                            .turn(node.getTurn())
+                            .game(game)
+                            .move(move)
+                            .score(0)
+                            .visits(0)
+                            .build();
+                    node.getChildren().add(newNode);
+                }
             }
         }
 
@@ -132,17 +140,16 @@ public class MonteCarloTreeSearch {
     }
 
     public void backpropagation(Node node, String winner) {
+        node.setPlayed(true);
         Node tempNode = node;
         while (tempNode != null) {
             tempNode.setVisits(tempNode.getVisits() + 1);
-            if (currentPlayer.equals(winner)) {
-                int winScore = 0;
-                for (String player : players) {
-                    if (!player.equals(winner)) {
-                        winScore += CardUtil.getCardValue(tempNode.getGame().getPlayerCards().get(player));
-                    }
+            if (winner != null) {
+                if (tempNode.getTurn().equals(winner)) {
+                    tempNode.setScore(tempNode.getScore() + 1);
+                } else {
+                    tempNode.setScore(tempNode.getScore() - 1);
                 }
-                tempNode.setScore(tempNode.getScore() + winScore);
             }
             tempNode = tempNode.getParent();
         }
@@ -159,6 +166,7 @@ public class MonteCarloTreeSearch {
                 .hasThrown(hasThrown)
                 .build();
         Node rootNode = Node.builder()
+                .played(true)
                 .parent(null)
                 .children(new ArrayList<>())
                 .turn(currentPlayer)

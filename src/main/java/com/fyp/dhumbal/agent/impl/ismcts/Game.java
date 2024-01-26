@@ -7,10 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Builder
 @Getter
@@ -67,6 +64,7 @@ public class Game {
                     if (deck.isEmpty()) {
                         deck.addAll(new ArrayList<>(floor));
                         floor = new ArrayList<>();
+                        Collections.shuffle(deck);
                     }
                     String card = AgentUtil.getCardToPick(hand, choices, deck.get(deck.size() - 1));
                     if (card.equals(AgentUtil.DECK)) {
@@ -77,7 +75,7 @@ public class Game {
                     hand.add(card);
                     if (!choices.isEmpty())
                         floor.addAll(choices);
-                    choices = tempChoices;
+                    choices = new ArrayList<>(tempChoices);
                     hasThrown = false;
                     turn = getNextPlayer(turn);
                     playCount++;
