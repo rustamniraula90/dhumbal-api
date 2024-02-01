@@ -26,10 +26,21 @@ public abstract class GameAgent {
                 gameService.endGame(request.getGameId(), request.getAgentId());
                 return;
             }
-            List<String> cardsToThrow = getCardsToThrow(request);
+            List<String> cardsToThrow;
+            try {
+                cardsToThrow = getCardsToThrow(request);
+            } catch (Exception e) {
+                cardsToThrow = request.getHand().subList(0, 1);
+            }
             gameService.throwCard(request.getGameId(), new GameThrowRequest(cardsToThrow), request.getAgentId(), request.getAgentName());
         } else {
-            String cardToPick = getCardToPick(request);
+            String cardToPick;
+            try {
+                cardToPick = getCardToPick(request);
+            } catch (Exception e) {
+                log.error("Error in picking card", e);
+                cardToPick = DECK;
+            }
             boolean deck = cardToPick.equals(DECK);
             gameService.pickCard(request.getGameId(), new GamePickRequest(deck, deck ? 0 : request.getChoices().indexOf(cardToPick)), request.getAgentId(), request.getAgentName());
         }

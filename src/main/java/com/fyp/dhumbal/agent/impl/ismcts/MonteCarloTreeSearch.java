@@ -7,8 +7,8 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Builder
 @Getter
@@ -16,13 +16,10 @@ import java.util.List;
 public class MonteCarloTreeSearch {
     private List<String> players;
     private String currentPlayer;
-    private HashMap<String, List<String>> playerCards;
+    private Map<String, List<String>> playerCards;
+    private Map<String, Integer> playerHandSize;
     private List<String> choices;
-    private List<String> deck;
     private List<String> floor;
-    private List<String> unknownCards;
-    private boolean randomize;
-    private int handSize;
 
     private int simulationCount;
 
@@ -35,7 +32,7 @@ public class MonteCarloTreeSearch {
 
     public String getNextChoice(int simulationTimeMillis) {
         String choice = run(simulationTimeMillis, true).getChoice();
-        log.info("Total {} simulations ran for Pick in {} milliseconds with result {} for hand {}, choice {} and deck {}", simulationCount, simulationTimeMillis, choice, playerCards.get(currentPlayer), choices, deck.get(deck.size() - 1));
+        log.info("Total {} simulations ran for Pick in {} milliseconds with result {} for hand {} and choice {}", simulationCount, simulationTimeMillis, choice, playerCards.get(currentPlayer), choices);
         return choices.contains(choice) ? choice : AgentUtil.DECK;
     }
 
@@ -53,21 +50,20 @@ public class MonteCarloTreeSearch {
             backpropagation(selectedNode, winner);
             simulationCount++;
         }
-        return tree.getRootNode().
-
-                getChildWithMaxScore();
+        return tree.getRootNode().getChildWithMaxScore();
     }
 
     public void determinization(Node node) {
-        if (randomize) {
-            List<String> unknownCardsCopy = new ArrayList<>(unknownCards);
-            for (String player : players) {
-                if (!player.equals(node.getTurn())) {
-                    playerCards.put(player, CardUtil.getRandomCard(unknownCardsCopy, handSize));
-                }
+        List<String> allCards = CardUtil.getShuffledCard();
+        allCards.removeAll(node.getGame().getFloor());
+        allCards.removeAll(node.getGame().getChoices());
+        allCards.removeAll(node.getGame().getPlayerCards().get(node.getTurn()));
+        for (String player : players) {
+            if (!player.equals(node.getTurn()) && !player.equals(currentPlayer)) {
+                node.getGame().getPlayerCards().put(player, CardUtil.getRandomCard(allCards, node.getGame().getPlayerHandSize().get(player)));
             }
-            deck = new ArrayList<>(unknownCardsCopy);
         }
+        node.getGame().setDeck(new ArrayList<>(allCards));
     }
 
     public Node selection(Node rootNode) {
@@ -90,6 +86,7 @@ public class MonteCarloTreeSearch {
                 game.getChoices().remove(choice);
                 game.getDeck().remove(choice);
                 game.getPlayerCards().get(node.getTurn()).add(choice);
+                game.getPlayerHandSize().put(node.getTurn(),game.getPlayerHandSize().get(node.getTurn())+1);
                 game.setHasThrown(false);
                 game.getFloor().addAll(new ArrayList<>(game.getChoices()));
                 game.setChoices(new ArrayList<>(game.getTempChoices()));
@@ -103,6 +100,7 @@ public class MonteCarloTreeSearch {
                         .choice(choice)
                         .score(0)
                         .visits(0)
+                        .level(node.getLevel()+1)
                         .build();
                 node.getChildren().add(newNode);
             }
@@ -114,6 +112,7 @@ public class MonteCarloTreeSearch {
                 for (List<String> move : possibleMoves) {
                     Game game = node.getGame().copy();
                     game.getPlayerCards().get(node.getTurn()).removeAll(move);
+                    game.getPlayerHandSize().put(node.getTurn(),game.getPlayerHandSize().get(node.getTurn())-move.size());
                     game.setTempChoices(move);
                     game.setHasThrown(true);
                     game.setWinner(null);
@@ -125,6 +124,7 @@ public class MonteCarloTreeSearch {
                             .move(move)
                             .score(0)
                             .visits(0)
+                            .level(node.getLevel()+1)
                             .build();
                     node.getChildren().add(newNode);
                 }
@@ -159,10 +159,10 @@ public class MonteCarloTreeSearch {
         Game game = Game.builder()
                 .choices(choices)
                 .tempChoices(new ArrayList<>())
-                .deck(deck)
                 .floor(floor)
                 .playerCards(playerCards)
                 .players(players)
+                .playerHandSize(playerHandSize)
                 .hasThrown(hasThrown)
                 .build();
         Node rootNode = Node.builder()
@@ -173,6 +173,7 @@ public class MonteCarloTreeSearch {
                 .game(game)
                 .score(0)
                 .visits(0)
+                .level(0)
                 .build();
         return Tree.builder().rootNode(rootNode).build();
     }

@@ -28,11 +28,7 @@ class MCTSTest {
                 .playerCards(hands)
                 .floor(new ArrayList<>())
                 .choices(choices)
-                .deck(allCard)
                 .currentPlayer("1")
-                .randomize(false)
-                .handSize(5)
-                .unknownCards(new ArrayList<>(allCard))
                 .build();
         System.out.println(mcts.getNextThrow(1000));
         System.out.println(mcts.getNextChoice(1000));
@@ -63,10 +59,7 @@ class MCTSTest {
                 .playerCards(hands)
                 .floor(new ArrayList<>())
                 .choices(choices)
-                .deck(allCard)
-                .randomize(false)
                 .currentPlayer(players.get(0))
-                .unknownCards(new ArrayList<>(allCard))
                 .build();
     }
 }

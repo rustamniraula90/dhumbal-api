@@ -158,6 +158,10 @@ public class GameServiceImpl implements GameService {
         GameEntity game = gameRepository.findById(gameId).orElseThrow(() -> new BadRequestException(ErrorCodes.BAD_REQUEST, "Game not found"));
         if (game.getTurn().startsWith("BOT")) {
             String[] agent = game.getTurn().split(AgentConstant.AGENT_ID_SEPARATOR);
+            Map<String, Integer> playerHandSize = new HashMap<>();
+            for (String player : game.getPlayers()) {
+                playerHandSize.put(player, game.getHands().get(player).size());
+            }
             AgentMoveRequest agentMoveRequest = AgentMoveRequest.builder()
                     .agentName("Level " + agent[1] + " Agent")
                     .agentId(game.getTurn())
@@ -165,7 +169,11 @@ public class GameServiceImpl implements GameService {
                     .hand(game.getHands().get(game.getTurn()))
                     .choices(game.getFloor().subList(game.getFloor().size() - game.getChoiceCount(), game.getFloor().size()))
                     .gameId(gameId)
+                    .playersHandSize(playerHandSize)
                     .moveType(game.isThrown() ? AgentMoveRequest.MoveType.PICK : AgentMoveRequest.MoveType.THROW)
+                    .floor(game.getFloor())
+                    .tempFloor(game.getTempFloor())
+                    .players(game.getPlayers())
                     .build();
             applicationEventPublisher.publishEvent(new AgentEventPayload(this, agentMoveRequest));
         }

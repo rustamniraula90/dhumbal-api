@@ -15,7 +15,7 @@ class BotBattleTest {
     private static final Map<String, Integer> PLAYER_LEVEL = new HashMap<>();
 
     static {
-        PLAYER_LEVEL.put("MCTS-1", 10);
+        PLAYER_LEVEL.put("MCTS-1", 3);
         PLAYER_LEVEL.put("BASIC-1", 0);
     }
 
@@ -77,6 +77,11 @@ class BotBattleTest {
             for (String player : players) {
                 playerCards.put(player, CardUtil.getRandomCard(allCard, 5));
             }
+            HashMap<String, List<String>> playerCardsCopy = new HashMap<>();
+            for (Map.Entry<String, List<String>> entry : playerCards.entrySet()) {
+                playerCardsCopy.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+            }
+
             List<String> choices = new ArrayList<>();
             choices.add(allCard.remove(0));
 
@@ -98,18 +103,30 @@ class BotBattleTest {
                     break;
                 }
                 List<String> move;
-                if (turn.startsWith("MCTS"))
+                if (turn.startsWith("MCTS")) {
+                    Map<String, Integer> playerHandSize = new HashMap<>();
+                    for (String player : players) {
+                        playerHandSize.put(player, playerCards.get(player).size());
+                    }
+                    Map<String, List<String>> playersHand = new HashMap<>();
+                    for (String player : players) {
+                        if (turn.equals(player)) {
+                            playersHand.put(player, new ArrayList<>(playerCards.get(player)));
+                        } else {
+                            playersHand.put(player, new ArrayList<>());
+                        }
+                    }
                     move = MonteCarloTreeSearch.builder()
                             .players(players)
-                            .playerCards(playerCards)
+                            .playerCards(playersHand)
                             .floor(floor)
                             .choices(choices)
-                            .deck(deck)
                             .currentPlayer(turn)
-                            .randomize(false)
+                            .playerHandSize(playerHandSize)
                             .build().getNextThrow(level.get(turn) * 500);
-                else
+                } else {
                     move = AgentUtil.getCardsToThrow(playerCards.get(turn));
+                }
                 playerCards.get(turn).removeAll(move);
                 tempChoices.addAll(move);
 
@@ -120,17 +137,28 @@ class BotBattleTest {
                 }
 
                 String choice;
-                if (turn.startsWith("MCTS"))
+                if (turn.startsWith("MCTS")) {
+                    Map<String, Integer> playerHandSize = new HashMap<>();
+                    for (String player : players) {
+                        playerHandSize.put(player, playerCards.get(player).size());
+                    }
+                    Map<String, List<String>> playersHand = new HashMap<>();
+                    for (String player : players) {
+                        if (turn.equals(player)) {
+                            playersHand.put(player, new ArrayList<>(playerCards.get(player)));
+                        } else {
+                            playersHand.put(player, new ArrayList<>());
+                        }
+                    }
                     choice = MonteCarloTreeSearch.builder()
                             .players(players)
-                            .playerCards(playerCards)
+                            .playerCards(playersHand)
+                            .playerHandSize(playerHandSize)
                             .floor(floor)
                             .choices(choices)
-                            .deck(deck)
                             .currentPlayer(turn)
-                            .randomize(false)
                             .build().getNextChoice(level.get(turn) * 500);
-                else
+                } else
                     choice = AgentUtil.getCardToPick(playerCards.get(turn), choices);
                 if (choice.equals(AgentUtil.DECK)) {
                     playerCards.get(turn).add(deck.remove(deck.size() - 1));
@@ -151,7 +179,7 @@ class BotBattleTest {
 
             System.out.println("Round " + (round / players.size()) + ": " + turn + " win");
             for (String player : players) {
-                System.out.println(player + " " + (turn.equals(player) ? "win" : "lose") + " " + playerCards.get(player).toString());
+                System.out.println(player + " " + (turn.equals(player) ? "win" : "lose") + " " + playerCardsCopy.get(player).toString() + "==>" + playerCards.get(player).toString());
             }
             return turn;
         }
@@ -176,8 +204,9 @@ class BotBattleTest {
             if (i < GAME_COUNT && battleThreadPool.available()) {
                 Collections.shuffle(players);
                 BattleThread battleThread = battleThreadPool.get(players, level);
+                battleThread.setName("Game-" + i);
                 battleThreads.add(battleThread);
-                new Thread(battleThread).start();
+                battleThread.start();
                 i++;
                 System.out.println("Game " + i + " started");
             }

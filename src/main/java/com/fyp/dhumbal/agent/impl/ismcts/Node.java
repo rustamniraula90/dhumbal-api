@@ -11,6 +11,7 @@ import java.util.Random;
 @Getter
 @Setter
 public class Node {
+    private int level;
     private boolean played;
     private Game game;
     private String turn;

@@ -15,15 +15,6 @@ public class AgentUtil {
         return AgentUtil.getMaxValueMove(possibleMoves);
     }
 
-    public static String getCardToPick(List<String> hands, List<String> choices, String deck) {
-        choices.add(deck);
-        String pick = getCardToPick(hands, choices);
-        if (pick.equals(deck)) {
-            return DECK;
-        }
-        return pick;
-    }
-
     public static String getCardToPick(List<String> hands, List<String> choices) {
         for (String choice : choices) {
             List<String> newHand = new ArrayList<>(hands);

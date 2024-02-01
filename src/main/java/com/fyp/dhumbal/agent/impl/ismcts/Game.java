@@ -22,7 +22,8 @@ public class Game {
     private List<String> tempChoices;
     private List<String> deck;
     private List<String> floor;
-    private HashMap<String, List<String>> playerCards;
+    private Map<String, Integer> playerHandSize;
+    private Map<String, List<String>> playerCards;
 
     public Game copy() {
         HashMap<String, List<String>> playerCardsCopy = new HashMap<>();
@@ -37,6 +38,7 @@ public class Game {
                 .tempChoices(new ArrayList<>(this.tempChoices))
                 .deck(new ArrayList<>(this.deck))
                 .floor(new ArrayList<>(this.floor))
+                .playerHandSize(new HashMap<>(playerHandSize))
                 .playerCards(playerCardsCopy)
                 .build();
     }
@@ -66,7 +68,7 @@ public class Game {
                         floor = new ArrayList<>();
                         Collections.shuffle(deck);
                     }
-                    String card = AgentUtil.getCardToPick(hand, choices, deck.get(deck.size() - 1));
+                    String card = AgentUtil.getCardToPick(hand, choices);
                     if (card.equals(AgentUtil.DECK)) {
                         card = deck.remove(deck.size() - 1);
                     } else {
