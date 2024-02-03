@@ -10,10 +10,13 @@
     </parent>
     <groupId>com.fyp.dhumbal</groupId>
     <artifactId>dhumbal</artifactId>
-    <version>0.0.1</version>
+    <version>1.0.0-api</version>
     <name>dhumbal</name>
     <description>A card game api server</description>
     <properties>
+        <docker.registry.host>registry.gitlab.com/rustam.niraula90</docker.registry.host>
+        <docker.registry.repository>dhumbal-registry</docker.registry.repository>
+        <docker.image.version>${project.version}</docker.image.version>
         <java.version>17</java.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <spring.openapi.version>2.2.0</spring.openapi.version>
@@ -136,4 +139,41 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>docker</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.google.cloud.tools</groupId>
+                        <artifactId>jib-maven-plugin</artifactId>
+                        <version>3.4.0</version>
+                        <configuration>
+                            <from>
+                                <image>openjdk:17-jdk-slim</image>
+                            </from>
+                            <to>
+                                <image>${docker.registry.host}/${docker.registry.repository}:${docker.image.version}
+                                </image>
+                            </to>
+                            <container>
+                                <jvmFlags>
+                                    <jvmFlag>-server</jvmFlag>
+                                </jvmFlags>
+                            </container>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>build-and-push-docker-image</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

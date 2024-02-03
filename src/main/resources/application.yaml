@@ -1,3 +1,4 @@
+
 spring:
   application:
     name: '@project.name@'
@@ -66,4 +67,5 @@ dhumbal:
       count: 5
   agent:
     randomize: true
-
+server:
+  port:
