@@ -5,8 +5,9 @@ A backend service for a Nepali card game.
 
 ## Tech Stack
 - Java (Spring Boot)
-- MySQL: for persistent data
-- Redis: for game state
+- MySQL: persistent data
+- Redis: game state cache
+- React: ![frontend](https://github.com/rustamniraula90/dhumbal-ui)
 
 ## Setup
 1. Clone the repo
