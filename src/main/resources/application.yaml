@@ -21,8 +21,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: subedisunil495@gmail.com
-    password: "zabg bpua tmzg ntca"
+    username: admin_email@gmail.com
+    password: "app password from gmail"
     properties:
       mail:
         smtp:
@@ -46,7 +46,7 @@ dhumbal:
       refreshTokenExpiryInMinute: 43200
     google:
       certUrl: https://www.googleapis.com/oauth2/v3/certs
-      clientId: 24099078143-qq0hgilb233dmasq45klcqdt36kthlnm.apps.googleusercontent.com
+      clientId: client_id_for_google_oauth
     otp:
       expiry: 60
       length: 15
